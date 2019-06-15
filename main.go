@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	_ "github.com/vbatts/git-validation/rules/danglingwhitespace"
+	//_ "github.com/vbatts/git-validation/rules/danglingwhitespace"
 	_ "github.com/vbatts/git-validation/rules/dco"
-	_ "github.com/vbatts/git-validation/rules/messageregexp"
+	//_ "github.com/vbatts/git-validation/rules/messageregexp"
 	_ "github.com/vbatts/git-validation/rules/shortsubject"
 	"github.com/vbatts/git-validation/validate"
 )
@@ -75,7 +75,7 @@ func main() {
 		}
 	}
 
-	runner, err := validate.NewRunner(*flDir, rules, commitRange, *flVerbose)
+	runner, err := NewRunner(*flDir, rules, commitRange, *flVerbose)
 	if err != nil {
 		log.Fatal(err)
 	}
