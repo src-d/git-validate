@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vbatts/git-validation/git"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 var (
@@ -26,24 +27,32 @@ type Rule struct {
 	Name        string // short name for reference in in the `-run=...` flag
 	Value       string // value to configure for the rule (i.e. a regexp to check for in the commit message)
 	Description string // longer Description for readability
-	Run         func(Rule, git.CommitEntry) Result
+	Run         func(*git.Repository, *object.Commit) (Result, error)
 	Default     bool // whether the registered rule is run by default
 }
 
 // Commit processes the given rules on the provided commit, and returns the result set.
-func Commit(c git.CommitEntry, rules []Rule) Results {
+func Commit(r *git.Repository, c *object.Commit, rules []Rule) (Results, error) {
 	results := Results{}
-	for _, r := range rules {
-		results = append(results, r.Run(r, c))
+	for _, rule := range rules {
+		result, err := rule.Run(r, c)
+		if err != nil {
+			return results, err
+		}
+
+		result.Rule = rule
+		results = append(results, result)
 	}
-	return results
+
+	return results, nil
 }
 
 // Result is the result for a single validation of a commit.
 type Result struct {
-	CommitEntry git.CommitEntry
-	Pass        bool
-	Msg         string
+	Rule   Rule
+	Commit *object.Commit
+	Pass   bool
+	Msg    string
 }
 
 // Results is a set of results. This is type makes it easy for the following function.
