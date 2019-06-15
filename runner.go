@@ -13,28 +13,33 @@ import (
 
 // Runner is the for processing a set of rules against a range of commits
 type Runner struct {
-	Root        string
-	Repository  *git.Repository
-	Rules       []validate.Rule
-	Results     validate.Results
-	Verbose     bool
-	CommitRange string // if this is empty, then it will default to FETCH_HEAD, then HEAD
+	Repository *git.Repository
+	Config     validate.Config
+	Verbose    bool
 }
 
 // NewRunner returns an initiallized Runner.
-func NewRunner(root string, rules []validate.Rule, commitrange string, verbose bool) (*Runner, error) {
-	r, err := git.PlainOpen(root)
+func NewRunner(root string, config string, verbose bool) (*Runner, error) {
+	runner := &Runner{}
+
+	var err error
+	runner.Repository, err = git.PlainOpen(root)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Runner{
-		Root:        root,
-		Repository:  r,
-		Rules:       rules,
-		CommitRange: commitrange,
-		Verbose:     verbose,
-	}, nil
+	file, err := os.Open(config)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+	if err := runner.Config.Decode(file); err != nil {
+		return nil, err
+	}
+
+	fmt.Println(err, runner.Config)
+	return runner, nil
 }
 
 func shortCommitMessage(c *object.Commit) string {
@@ -43,19 +48,26 @@ func shortCommitMessage(c *object.Commit) string {
 }
 
 // Run processes the rules for each commit in the range provided
-func (r *Runner) Run() error {
-	iter, err := r.Repository.Log(&git.LogOptions{})
+func (r *Runner) Run() (validate.Results, error) {
+	rules, err := validate.Rules(&r.Config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return iter.ForEach(func(c *object.Commit) error {
-		vr, err := validate.Commit(nil, c, r.Rules)
+	iter, err := r.Repository.Log(&git.LogOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(validate.Results, 0)
+	return results, iter.ForEach(func(c *object.Commit) error {
+		vr, err := validate.Commit(nil, c, rules)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 
-		r.Results = append(r.Results, vr...)
+		results = append(results, vr...)
+
 		_, fail := vr.PassFail()
 		if os.Getenv("QUIET") != "" {
 			if fail != 0 {
@@ -87,9 +99,9 @@ func (r *Runner) Run() error {
 					result = color.RedString("FAIL")
 				}
 
-				fmt.Printf("   └ %s [%s]  %s\n", result, res.Rule.Name, res.Msg)
+				fmt.Printf("   └ %s [%s]  %s\n", result, res.Rule.ID(), res.Msg)
 			} else if !res.Pass {
-				fmt.Printf("   └ %s [%s] %s\n", color.RedString("FAIL"), res.Rule.Name, res.Msg)
+				fmt.Printf("   └ %s [%s] %s\n", color.RedString("FAIL"), res.Rule.ID(), res.Msg)
 			}
 		}
 

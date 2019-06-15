@@ -11,23 +11,32 @@ import (
 )
 
 func init() {
-	validate.RegisterRule(DCORule)
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var (
-	// ValidDCO is the regexp for signed off DCO
-	ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)
-	// DcoRule is the rule being registered
-	DCORule = validate.Rule{
-		Name:        "DCO",
-		Description: "makes sure the commits are signed",
-		Run:         ValidateDCO,
-		Default:     true,
-	}
-)
+type Kind struct{}
 
-// ValidateDCO checks that the commit has been signed off, per the DCO process
-func ValidateDCO(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
+func (*Kind) Name() string {
+	return "dco"
+}
+
+func (*Kind) Rule(*validate.RuleConfig) (validate.Rule, error) {
+	return &Rule{}, nil
+}
+
+type Rule struct{}
+
+func (*Rule) ID() string {
+	return "dco"
+}
+
+func (*Rule) Description() string {
+	return "makes sure the commits are signed"
+}
+
+var ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)
+
+func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
 	vr.Commit = c
 	if c.NumParents() > 1 {
 		vr.Pass = true

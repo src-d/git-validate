@@ -9,23 +9,31 @@ import (
 	"github.com/vbatts/git-validation/validate"
 )
 
-var (
-	// ShortSubjectRule is the rule being registered
-	ShortSubjectRule = validate.Rule{
-		Name:        "short-message",
-		Description: "commit message are strictly less than 90 (github ellipsis length)",
-		Run:         ValidateShortSubject,
-		Default:     true,
-	}
-)
-
 func init() {
-	validate.RegisterRule(ShortSubjectRule)
+	validate.RegisterRuleKind(&Kind{})
 }
 
-// ValidateShortSubject checks that the commit's subject is strictly less than
-// 90 characters (preferably not more than 72 chars).
-func ValidateShortSubject(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
+type Kind struct{}
+
+func (*Kind) Name() string {
+	return "short-subject"
+}
+
+func (*Kind) Rule(*validate.RuleConfig) (validate.Rule, error) {
+	return &Rule{}, nil
+}
+
+type Rule struct{}
+
+func (*Rule) ID() string {
+	return "short-subject"
+}
+
+func (*Rule) Description() string {
+	return "commit subject are strictly less than 90 (github ellipsis length)"
+}
+
+func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
 	if c.NumParents() > 1 {
 		vr.Pass = true
 		vr.Msg = "merge commits do not require length check"

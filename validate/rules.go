@@ -1,41 +1,67 @@
 package validate
 
 import (
-	"sort"
-	"strings"
+	"fmt"
 	"sync"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+type RuleKind interface {
+	// Name short self-explenatory name of the kind.
+	Name() string
+	// Rule returns a new rule based on the given config, or an error if the
+	// configuration is wrong.
+	Rule(*RuleConfig) (Rule, error)
+}
+
+type Rule interface {
+	// ID short self-explenatory name of the rule.
+	ID() string
+	// Description longer description for readability.
+	Description() string
+	// Check evaluate a repository and a commit againts this rule.
+	Check(*git.Repository, *object.Commit) (Result, error)
+}
+
 var (
-	// RegisteredRules are the avaible validation to perform on git commits
-	RegisteredRules  = []Rule{}
-	registerRuleLock = sync.Mutex{}
+	RegisteredRuleKinds = make(map[string]RuleKind, 0)
+	registerRuleLock    = sync.Mutex{}
 )
 
-// RegisterRule includes the Rule in the avaible set to use
-func RegisterRule(vr Rule) {
+// RegisterRuleKind includes the RuleKind in the avaible set to use
+func RegisterRuleKind(vr RuleKind) {
 	registerRuleLock.Lock()
 	defer registerRuleLock.Unlock()
-	RegisteredRules = append(RegisteredRules, vr)
+
+	RegisteredRuleKinds[vr.Name()] = vr
 }
 
-// Rule will operate over a provided git.CommitEntry, and return a result.
-type Rule struct {
-	Name        string // short name for reference in in the `-run=...` flag
-	Value       string // value to configure for the rule (i.e. a regexp to check for in the commit message)
-	Description string // longer Description for readability
-	Run         func(*git.Repository, *object.Commit) (Result, error)
-	Default     bool // whether the registered rule is run by default
+func Rules(cfg *Config) ([]Rule, error) {
+	rules := make([]Rule, len(cfg.Rules))
+	for i, rc := range cfg.Rules {
+		k, ok := RegisteredRuleKinds[rc.Kind]
+		if !ok {
+			return nil, fmt.Errorf("unable to find %q kind", rc.Kind)
+		}
+
+		var err error
+		rules[i], err = k.Rule(&rc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rules, nil
 }
 
-// Commit processes the given rules on the provided commit, and returns the result set.
+// Commit processes the given rules on the provided commit, and returns the
+// result set.
 func Commit(r *git.Repository, c *object.Commit, rules []Rule) (Results, error) {
 	results := Results{}
 	for _, rule := range rules {
-		result, err := rule.Run(r, c)
+		result, err := rule.Check(r, c)
 		if err != nil {
 			return results, err
 		}
@@ -67,77 +93,6 @@ func (vr Results) PassFail() (pass int, fail int) {
 			fail++
 		}
 	}
+
 	return pass, fail
-}
-
-// SanitizeFilters takes a comma delimited list and returns the trimmend and
-// split (on ",") items in the list
-func SanitizeFilters(filtStr string) (filters []string) {
-	for _, item := range strings.Split(filtStr, ",") {
-		filters = append(filters, strings.TrimSpace(item))
-	}
-	return
-}
-
-// FilterRules takes a set of rules and a list of short names to include, and
-// returns the reduced set.  The comparison is case insensitive.
-//
-// Some `includes` rules have values assigned to them.
-// i.e. -run "dco,message_regexp='^JIRA-[0-9]+ [A-Z].*$'"
-//
-func FilterRules(rules []Rule, includes []string) []Rule {
-	ret := []Rule{}
-
-	for _, r := range rules {
-		for i := range includes {
-			if strings.Contains(includes[i], "=") {
-				chunks := strings.SplitN(includes[i], "=", 2)
-				if strings.ToLower(r.Name) == strings.ToLower(chunks[0]) {
-					// for these rules, the Name won't be unique per se. There may be
-					// multiple "regexp=" with different values. We'll need to set the
-					// .Value = chunk[1] and ensure r is dup'ed so they don't clobber
-					// each other.
-					newR := Rule(r)
-					newR.Value = chunks[1]
-					ret = append(ret, newR)
-				}
-			} else {
-				if strings.ToLower(r.Name) == strings.ToLower(includes[i]) {
-					ret = append(ret, r)
-				}
-			}
-		}
-	}
-
-	return ret
-}
-
-// StringsSliceEqual compares two string arrays for equality
-func StringsSliceEqual(a, b []string) bool {
-	if !sort.StringsAreSorted(a) {
-		sort.Strings(a)
-	}
-	if !sort.StringsAreSorted(b) {
-		sort.Strings(b)
-	}
-	for i := range b {
-		if !StringsSliceContains(a, b[i]) {
-			return false
-		}
-	}
-	for i := range a {
-		if !StringsSliceContains(b, a[i]) {
-			return false
-		}
-	}
-	return true
-}
-
-// StringsSliceContains checks for the presence of a word in string array
-func StringsSliceContains(a []string, b string) bool {
-	if !sort.StringsAreSorted(a) {
-		sort.Strings(a)
-	}
-	i := sort.SearchStrings(a, b)
-	return i < len(a) && a[i] == b
 }
