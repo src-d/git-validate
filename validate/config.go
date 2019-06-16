@@ -33,3 +33,13 @@ type RuleConfig struct {
 	Severity Severity
 	Params   map[string]interface{}
 }
+
+// LoadParamsTo loads the rule config params into a target.
+func (c *RuleConfig) LoadParamsTo(target interface{}) error {
+	d, err := yaml.Marshal(c.Params)
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(d, target)
+}
