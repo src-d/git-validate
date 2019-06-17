@@ -16,9 +16,29 @@ type RuleKind interface {
 	Rule(*RuleConfig) (Rule, error)
 }
 
+type Severity int
+
+const (
+	_ Severity = iota
+	Low
+	Medium
+	High
+	Critical
+)
+
+type Context int
+
+const (
+	_ Context = iota
+	SingleCommit
+	History
+)
+
 type Rule interface {
 	// ID short self-explenatory name of the rule.
 	ID() string
+	// Context represent the context where this rule is checked.
+	Context() Context
 	// Description longer description for readability.
 	Description() string
 	// Check evaluate a repository and a commit againts this rule.
@@ -58,9 +78,13 @@ func Rules(cfg *Config) ([]Rule, error) {
 
 // Commit processes the given rules on the provided commit, and returns the
 // result set.
-func Commit(r *git.Repository, c *object.Commit, rules []Rule) (Results, error) {
+func Commit(rules []Rule, r *git.Repository, c *object.Commit, isHead bool) (Results, error) {
 	results := Results{}
 	for _, rule := range rules {
+		if !isHead && rule.Context() != History {
+			continue
+		}
+
 		result, err := rule.Check(r, c)
 		if err != nil {
 			return results, err
@@ -75,10 +99,11 @@ func Commit(r *git.Repository, c *object.Commit, rules []Rule) (Results, error) 
 
 // Result is the result for a single validation of a commit.
 type Result struct {
-	Rule   Rule
+	Rule    Rule
+	Pass    bool
+	Message string
+
 	Commit *object.Commit
-	Pass   bool
-	Msg    string
 }
 
 // Results is a set of results. This is type makes it easy for the following function.

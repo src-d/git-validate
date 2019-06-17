@@ -20,6 +20,10 @@ func (*Kind) Name() string {
 	return "dco"
 }
 
+func (*Kind) Context() validate.Context {
+	return validate.History
+}
+
 func (*Kind) Rule(*validate.RuleConfig) (validate.Rule, error) {
 	return &Rule{}, nil
 }
@@ -28,6 +32,10 @@ type Rule struct{}
 
 func (*Rule) ID() string {
 	return "dco"
+}
+
+func (*Rule) Context() validate.Context {
+	return validate.History
 }
 
 func (*Rule) Description() string {
@@ -40,7 +48,7 @@ func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err
 	vr.Commit = c
 	if c.NumParents() > 1 {
 		vr.Pass = true
-		vr.Msg = "merge commits do not require DCO"
+		vr.Message = "merge commits do not require DCO"
 		return vr, nil
 	}
 
@@ -50,12 +58,13 @@ func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err
 			hasValid = true
 		}
 	}
+
 	if !hasValid {
 		vr.Pass = false
-		vr.Msg = "does not have a valid DCO"
+		vr.Message = "does not have a valid DCO"
 	} else {
 		vr.Pass = true
-		vr.Msg = "has a valid DCO"
+		vr.Message = "has a valid DCO"
 	}
 
 	return vr, nil

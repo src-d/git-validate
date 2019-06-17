@@ -7,16 +7,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Severity int
-
-const (
-	_ Severity = iota
-	Low
-	Medium
-	High
-	Critical
-)
-
 type Config struct {
 	Rules []RuleConfig
 }

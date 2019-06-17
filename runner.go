@@ -59,13 +59,15 @@ func (r *Runner) Run() (validate.Results, error) {
 		return nil, err
 	}
 
+	isHead := true
 	results := make(validate.Results, 0)
 	return results, iter.ForEach(func(c *object.Commit) error {
-		vr, err := validate.Commit(nil, c, rules)
+		vr, err := validate.Commit(rules, r.Repository, c, isHead)
 		if err != nil {
 			return err
 		}
 
+		isHead = false
 		results = append(results, vr...)
 
 		_, fail := vr.PassFail()
@@ -73,7 +75,7 @@ func (r *Runner) Run() (validate.Results, error) {
 			if fail != 0 {
 				for _, res := range vr {
 					if !res.Pass {
-						fmt.Printf(" %s - FAIL - %s\n", c.Hash.String(), res.Msg)
+						fmt.Printf(" %s - FAIL - %s\n", c.Hash.String(), res.Message)
 					}
 				}
 			}
@@ -99,9 +101,9 @@ func (r *Runner) Run() (validate.Results, error) {
 					result = color.RedString("FAIL")
 				}
 
-				fmt.Printf("   └ %s [%s]  %s\n", result, res.Rule.ID(), res.Msg)
+				fmt.Printf("   └ %s [%s]  %s\n", result, res.Rule.ID(), res.Message)
 			} else if !res.Pass {
-				fmt.Printf("   └ %s [%s] %s\n", color.RedString("FAIL"), res.Rule.ID(), res.Msg)
+				fmt.Printf("   └ %s [%s] %s\n", color.RedString("FAIL"), res.Rule.ID(), res.Message)
 			}
 		}
 

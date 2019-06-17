@@ -40,6 +40,10 @@ func (r *Rule) ID() string {
 	return r.Name
 }
 
+func (*Rule) Context() validate.Context {
+	return validate.SingleCommit
+}
+
 func (r *Rule) Description() string {
 	return fmt.Sprintf("file %q shoud be present", r.Config.Present)
 }
@@ -65,10 +69,10 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, e
 
 	if found != len(r.Config.Present) {
 		vr.Pass = false
-		vr.Msg = fmt.Sprintf("does not have mandatory files %q", r.Config.Present)
+		vr.Message = fmt.Sprintf("does not have mandatory files %q", r.Config.Present)
 	} else {
 		vr.Pass = true
-		vr.Msg = "has all the mandatory files"
+		vr.Message = "has all the mandatory files"
 	}
 
 	return vr, nil
