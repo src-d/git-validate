@@ -17,7 +17,7 @@ var (
 	flVerbose      = flag.Bool("v", false, "verbose")
 	flDebug        = flag.Bool("D", false, "debug output")
 	flQuiet        = flag.Bool("q", false, "less output")
-	flDir          = flag.String("d", ".", "git directory to validate from")
+	flDir          = flag.String("d", ".", "git directory to compliance from")
 	flNoTravis     = flag.Bool("no-travis", false, "disables travis environment checks (when env TRAVIS=true is set)")
 	flTravisPROnly = flag.Bool("travis-pr-only", true, "when on travis, only run validations if the CI-Build is checking pull-request build")
 )
@@ -37,7 +37,7 @@ func main() {
 		return
 	}
 
-	runner, err := NewRunner(*flDir, "police.yml", *flVerbose)
+	runner, err := NewRunner(*flDir, "compliance.yml", *flVerbose)
 	if err != nil {
 		log.Fatal(err)
 	}

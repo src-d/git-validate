@@ -6,11 +6,11 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-	"github.com/vbatts/git-validation/validate"
+	"github.com/vbatts/git-validation/compliance"
 )
 
 func init() {
-	validate.RegisterRuleKind(&Kind{})
+	compliance.RegisterRuleKind(&Kind{})
 }
 
 type Kind struct{}
@@ -19,9 +19,9 @@ func (*Kind) Name() string {
 	return "file"
 }
 
-func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
+func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
 	r := &Rule{
-		Name: cfg.Name,
+		BaseRule: compliance.NewBaseRule(compliance.SingleCommit, *cfg),
 	}
 
 	return r, cfg.LoadParamsTo(&r.Config)
@@ -32,23 +32,15 @@ type RuleConfig struct {
 }
 
 type Rule struct {
-	Name   string
+	compliance.BaseRule
 	Config RuleConfig
-}
-
-func (r *Rule) ID() string {
-	return r.Name
-}
-
-func (*Rule) Context() validate.Context {
-	return validate.SingleCommit
 }
 
 func (r *Rule) Description() string {
 	return fmt.Sprintf("file %q shoud be present", r.Config.Present)
 }
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result, err error) {
 	vr.Commit = c
 
 	var found int

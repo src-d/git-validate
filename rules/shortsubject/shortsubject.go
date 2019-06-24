@@ -6,11 +6,11 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-	"github.com/vbatts/git-validation/validate"
+	"github.com/vbatts/git-validation/compliance"
 )
 
 func init() {
-	validate.RegisterRuleKind(&Kind{})
+	compliance.RegisterRuleKind(&Kind{})
 }
 
 type Kind struct{}
@@ -19,25 +19,19 @@ func (*Kind) Name() string {
 	return "short-subject"
 }
 
-func (*Kind) Rule(*validate.RuleConfig) (validate.Rule, error) {
-	return &Rule{}, nil
+func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+	return &Rule{compliance.NewBaseRule(compliance.History, *cfg)}, nil
 }
 
-type Rule struct{}
-
-func (*Rule) ID() string {
-	return "short-subject"
-}
-
-func (*Rule) Context() validate.Context {
-	return validate.History
+type Rule struct {
+	compliance.BaseRule
 }
 
 func (*Rule) Description() string {
 	return "commit subject are strictly less than 90 (github ellipsis length)"
 }
 
-func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr validate.Result, err error) {
+func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result, err error) {
 	if c.NumParents() > 1 {
 		vr.Pass = true
 		vr.Message = "merge commits do not require length check"

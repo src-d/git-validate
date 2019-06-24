@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/vbatts/git-validation/compliance"
+
 	"github.com/fatih/color"
-	"github.com/vbatts/git-validation/validate"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
@@ -14,7 +15,7 @@ import (
 // Runner is the for processing a set of rules against a range of commits
 type Runner struct {
 	Repository *git.Repository
-	Config     validate.Config
+	Config     compliance.Config
 	Verbose    bool
 }
 
@@ -48,8 +49,8 @@ func shortCommitMessage(c *object.Commit) string {
 }
 
 // Run processes the rules for each commit in the range provided
-func (r *Runner) Run() (validate.Results, error) {
-	rules, err := validate.Rules(&r.Config)
+func (r *Runner) Run() (compliance.Results, error) {
+	rules, err := compliance.Rules(&r.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +61,9 @@ func (r *Runner) Run() (validate.Results, error) {
 	}
 
 	isHead := true
-	results := make(validate.Results, 0)
+	results := make(compliance.Results, 0)
 	return results, iter.ForEach(func(c *object.Commit) error {
-		vr, err := validate.Commit(rules, r.Repository, c, isHead)
+		vr, err := compliance.Commit(rules, r.Repository, c, isHead)
 		if err != nil {
 			return err
 		}
@@ -101,9 +102,9 @@ func (r *Runner) Run() (validate.Results, error) {
 					result = color.RedString("FAIL")
 				}
 
-				fmt.Printf("   └ %s [%s]  %s\n", result, res.Rule.ID(), res.Message)
+				fmt.Printf("   └ %s %s [%s]  %s\n", res.Rule.Severity(), result, res.Rule.ID(), res.Message)
 			} else if !res.Pass {
-				fmt.Printf("   └ %s [%s] %s\n", color.RedString("FAIL"), res.Rule.ID(), res.Message)
+				fmt.Printf("   └ %s %s [%s] %s\n", res.Rule.Severity(), color.RedString("FAIL"), res.Rule.ID(), res.Message)
 			}
 		}
 
