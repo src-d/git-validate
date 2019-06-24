@@ -1,5 +1,4 @@
-//go:generate stringer -type=Severity
-package validate
+package compliance
 
 import (
 	"io"
@@ -7,7 +6,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config is a group of rule configurations.
 type Config struct {
+	// Rules rule configurations.
 	Rules []RuleConfig
 }
 
@@ -16,12 +17,18 @@ func (c *Config) Decode(r io.Reader) error {
 	return yaml.NewDecoder(r).Decode(c)
 }
 
+// RuleConfig contains the configuration for a rule.
 type RuleConfig struct {
-	Name     string
-	Kind     string
-	Rule     string
+	// Kind kind of the rule, from the list of supported rule kinds.
+	Kind string
+	// ID short self-explenatory id of the rule.
+	ID string
+	// Description longer description for readability.
+	Description string
+	// Severity of the rule.
 	Severity Severity
-	Params   map[string]interface{}
+	// Params is a map of params to pass as configuration to the kind.
+	Params map[string]interface{}
 }
 
 // LoadParamsTo loads the rule config params into a target.

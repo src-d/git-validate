@@ -1,4 +1,5 @@
-package validate
+//go:generate stringer -type=Severity
+package compliance
 
 import (
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+// RuleKind is creates rules of a kind.
 type RuleKind interface {
 	// Name short self-explenatory name of the kind.
 	Name() string
@@ -16,7 +18,34 @@ type RuleKind interface {
 	Rule(*RuleConfig) (Rule, error)
 }
 
+// Severity describes the severity of a rule.
 type Severity int
+
+//UnmarshalYAML honors the yaml.Unmarshaler interface.
+func (s *Severity) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	err := unmarshal(&str)
+	if err != nil {
+		return err
+	}
+
+	switch str {
+	case "low":
+		*s = Low
+		return nil
+	case "medium":
+		*s = Medium
+		return nil
+	case "high":
+		*s = High
+		return nil
+	case "critical":
+		*s = Critical
+		return nil
+	default:
+		return fmt.Errorf("invalid severity value %q", str)
+	}
+}
 
 const (
 	_ Severity = iota
@@ -34,19 +63,52 @@ const (
 	History
 )
 
+// Rule is a rule validator for a given git.Repository and a object.Commit.
 type Rule interface {
-	// ID short self-explenatory name of the rule.
+	// ID short self-explenatory id of the rule.
 	ID() string
 	// Context represent the context where this rule is checked.
 	Context() Context
+	// Severity returns the severity of the rule.
+	Severity() Severity
 	// Description longer description for readability.
 	Description() string
 	// Check evaluate a repository and a commit againts this rule.
 	Check(*git.Repository, *object.Commit) (Result, error)
 }
 
+// BaseRule used to avoid code duplication on the creation of new rules and kinds.
+type BaseRule struct {
+	context Context
+	config  RuleConfig
+}
+
+// NewBaseRule returns a new base rule for the given context and config.
+func NewBaseRule(ctx Context, cfg RuleConfig) BaseRule {
+	return BaseRule{context: ctx, config: cfg}
+}
+
+// ID honors the Rule interface.
+func (r *BaseRule) ID() string {
+	return r.config.ID
+}
+
+func (r *BaseRule) Context() Context {
+	return r.context
+}
+
+// Severity honors the Rule interface.
+func (r *BaseRule) Severity() Severity {
+	return r.config.Severity
+}
+
+// Description honors the Rule interface.
+func (r *BaseRule) Description() string {
+	return r.config.Description
+}
+
 var (
-	RegisteredRuleKinds = make(map[string]RuleKind, 0)
+	registeredRuleKinds = make(map[string]RuleKind, 0)
 	registerRuleLock    = sync.Mutex{}
 )
 
@@ -55,25 +117,30 @@ func RegisterRuleKind(vr RuleKind) {
 	registerRuleLock.Lock()
 	defer registerRuleLock.Unlock()
 
-	RegisteredRuleKinds[vr.Name()] = vr
+	registeredRuleKinds[vr.Name()] = vr
 }
 
+//Rules generates the rules based on a given config.
 func Rules(cfg *Config) ([]Rule, error) {
 	rules := make([]Rule, len(cfg.Rules))
 	for i, rc := range cfg.Rules {
-		k, ok := RegisteredRuleKinds[rc.Kind]
-		if !ok {
-			return nil, fmt.Errorf("unable to find %q kind", rc.Kind)
-		}
-
 		var err error
-		rules[i], err = k.Rule(&rc)
+		rules[i], err = rule(&rc)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return rules, nil
+}
+
+func rule(cfg *RuleConfig) (Rule, error) {
+	k, ok := registeredRuleKinds[cfg.Kind]
+	if !ok {
+		return nil, fmt.Errorf("unable to find %q kind", cfg.Kind)
+	}
+
+	return k.Rule(cfg)
 }
 
 // Commit processes the given rules on the provided commit, and returns the
