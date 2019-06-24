@@ -14,6 +14,12 @@ func init() {
 	compliance.RegisterRuleKind(&Kind{})
 }
 
+var defaultConfig = &compliance.RuleConfig{
+	ID:          "dco",
+	Severity:    compliance.Medium,
+	Description: "makes sure the commits are signed",
+}
+
 type Kind struct{}
 
 func (*Kind) Name() string {
@@ -21,23 +27,12 @@ func (*Kind) Name() string {
 }
 
 func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+	cfg.Merge(defaultConfig)
 	return &Rule{compliance.NewBaseRule(compliance.History, *cfg)}, nil
 }
 
 type Rule struct {
 	compliance.BaseRule
-}
-
-func (*Rule) ID() string {
-	return "dco"
-}
-
-func (*Rule) Context() compliance.Context {
-	return compliance.History
-}
-
-func (*Rule) Description() string {
-	return "makes sure the commits are signed"
 }
 
 var ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)

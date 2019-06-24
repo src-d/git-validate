@@ -50,3 +50,18 @@ func TestRuleConfigLoadParamsTo(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, target.Foo, "bar")
 }
+
+func TestRuleConfigMerge(t *testing.T) {
+	cfg := &RuleConfig{}
+	cfg.Merge(&RuleConfig{
+		ID:          "foo",
+		Severity:    High,
+		Description: "qux",
+		Params:      map[string]interface{}{"foo": "bar"},
+	})
+
+	assert.Equal(t, cfg.ID, "foo")
+	assert.Equal(t, cfg.Severity, High)
+	assert.Equal(t, cfg.Description, "qux")
+	assert.Len(t, cfg.Params, 1)
+}

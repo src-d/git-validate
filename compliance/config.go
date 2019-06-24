@@ -40,3 +40,22 @@ func (c *RuleConfig) LoadParamsTo(target interface{}) error {
 
 	return yaml.Unmarshal(d, target)
 }
+
+// Merge merges the given rule config with the receiver.
+func (c *RuleConfig) Merge(cfg *RuleConfig) {
+	if c.ID == "" {
+		c.ID = cfg.ID
+	}
+
+	if c.Description == "" {
+		c.Description = cfg.Description
+	}
+
+	if c.Severity == 0 {
+		c.Severity = cfg.Severity
+	}
+
+	if len(c.Params) == 0 {
+		c.Params = cfg.Params
+	}
+}
