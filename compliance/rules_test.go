@@ -79,7 +79,6 @@ func TestRules_NotFound(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-
 	testCases := []struct {
 		name   string
 		ctx    Context

@@ -3,14 +3,20 @@ package file
 import (
 	"fmt"
 
+	"github.com/vbatts/git-validation/compliance"
+
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
-	"github.com/vbatts/git-validation/compliance"
 )
 
 func init() {
 	compliance.RegisterRuleKind(&Kind{})
+}
+
+var defaultConfig = &compliance.RuleConfig{
+	ID:          "file",
+	Severity:    compliance.Medium,
+	Description: "file(s) %q should be present",
 }
 
 type Kind struct{}
@@ -20,6 +26,8 @@ func (*Kind) Name() string {
 }
 
 func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+	cfg.Merge(defaultConfig)
+
 	r := &Rule{
 		BaseRule: compliance.NewBaseRule(compliance.SingleCommit, *cfg),
 	}

@@ -13,6 +13,12 @@ func init() {
 	compliance.RegisterRuleKind(&Kind{})
 }
 
+var defaultConfig = &compliance.RuleConfig{
+	ID:          "short-subject",
+	Severity:    compliance.Medium,
+	Description: "commit subject are strictly less than 90 (github ellipsis length)",
+}
+
 type Kind struct{}
 
 func (*Kind) Name() string {
@@ -20,6 +26,7 @@ func (*Kind) Name() string {
 }
 
 func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+	cfg.Merge(defaultConfig)
 	return &Rule{compliance.NewBaseRule(compliance.History, *cfg)}, nil
 }
 
@@ -36,6 +43,12 @@ func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result, e
 		vr.Pass = true
 		vr.Message = "merge commits do not require length check"
 		return vr, nil
+	}
+
+	if c.Message == "" {
+		vr.Pass = false
+		vr.Message = "commit subject is empty"
+		return
 	}
 
 	lines := strings.SplitN(c.Message, "\n", 2)
