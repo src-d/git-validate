@@ -3,7 +3,7 @@ package file
 import (
 	"testing"
 
-	"github.com/vbatts/git-validation/compliance"
+	"github.com/src-d/git-compliance/compliance"
 
 	"github.com/stretchr/testify/assert"
 	fixtures "gopkg.in/src-d/go-git-fixtures.v3"

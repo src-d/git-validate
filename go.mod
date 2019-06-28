@@ -1,4 +1,4 @@
-module github.com/vbatts/git-validation
+module github.com/src-d/git-compliance
 
 go 1.12
 

@@ -1,6 +1,6 @@
 language: go
 
-go_import_path: github.com/vbatts/git-validation
+go_import_path: github.com/src-d/git-compliance
 
 go:
   - "tip"

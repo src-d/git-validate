@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vbatts/git-validation/compliance"
+	"github.com/src-d/git-compliance/compliance"
 
 	"github.com/fatih/color"
 	"gopkg.in/src-d/go-git.v4"
@@ -102,7 +102,7 @@ func (r *Runner) Run() (compliance.Results, error) {
 					result = color.RedString("FAIL")
 				}
 
-				fmt.Printf("   └ %s %s [%s]  %s\n", res.Rule.Severity(), result, res.Rule.ID(), res.Message)
+				fmt.Printf("   └ %s %s [%s] %s\n", res.Rule.Severity(), result, res.Rule.ID(), res.Message)
 			} else if !res.Pass {
 				fmt.Printf("   └ %s %s [%s] %s\n", res.Rule.Severity(), color.RedString("FAIL"), res.Rule.ID(), res.Message)
 			}

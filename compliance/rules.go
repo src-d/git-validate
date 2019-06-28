@@ -1,4 +1,3 @@
-//go:generate stringer -type=Severity
 package compliance
 
 import (
@@ -20,6 +19,29 @@ type RuleKind interface {
 
 // Severity describes the severity of a rule.
 type Severity int
+
+const (
+	_ Severity = iota
+	Low
+	Medium
+	High
+	Critical
+)
+
+func (s Severity) String() string {
+	switch s {
+	case Low:
+		return "LOW"
+	case Medium:
+		return "MEDIUM"
+	case High:
+		return "HIGH"
+	case Critical:
+		return "CRITITCAL"
+	default:
+		return fmt.Sprintf("UNKNOWN(%d)", s)
+	}
+}
 
 //UnmarshalYAML honors the yaml.Unmarshaler interface.
 func (s *Severity) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -46,14 +68,6 @@ func (s *Severity) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return fmt.Errorf("invalid severity value %q", str)
 	}
 }
-
-const (
-	_ Severity = iota
-	Low
-	Medium
-	High
-	Critical
-)
 
 type Context int
 
@@ -93,6 +107,7 @@ func (r *BaseRule) ID() string {
 	return r.config.ID
 }
 
+// Context honors the Rule interface.
 func (r *BaseRule) Context() Context {
 	return r.context
 }

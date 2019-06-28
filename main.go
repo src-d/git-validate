@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
-	_ "github.com/vbatts/git-validation/rules/dco"
-	_ "github.com/vbatts/git-validation/rules/file"
-	_ "github.com/vbatts/git-validation/rules/shortsubject"
+	_ "github.com/src-d/git-compliance/rules/dco"
+	_ "github.com/src-d/git-compliance/rules/dockerfile"
+	_ "github.com/src-d/git-compliance/rules/file"
+	_ "github.com/src-d/git-compliance/rules/shortsubject"
 )
 
 var (

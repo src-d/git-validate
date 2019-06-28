@@ -3,7 +3,7 @@ package dco
 import (
 	"testing"
 
-	"github.com/vbatts/git-validation/compliance"
+	"github.com/src-d/git-compliance/compliance"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4/plumbing"
