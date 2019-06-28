@@ -1,9 +1,12 @@
 package compliance
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 	"sync"
 
+	"github.com/fatih/color"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
@@ -88,7 +91,7 @@ type Rule interface {
 	// Description longer description for readability.
 	Description() string
 	// Check evaluate a repository and a commit againts this rule.
-	Check(*git.Repository, *object.Commit) (Result, error)
+	Check(*git.Repository, *object.Commit) ([]Result, error)
 }
 
 // BaseRule used to avoid code duplication on the creation of new rules and kinds.
@@ -104,7 +107,7 @@ func NewBaseRule(ctx Context, cfg RuleConfig) BaseRule {
 
 // ID honors the Rule interface.
 func (r *BaseRule) ID() string {
-	return r.config.ID
+	return strings.ToUpper(r.config.ID)
 }
 
 // Context honors the Rule interface.
@@ -167,13 +170,16 @@ func Commit(rules []Rule, r *git.Repository, c *object.Commit, isHead bool) (Res
 			continue
 		}
 
-		result, err := rule.Check(r, c)
+		r, err := rule.Check(r, c)
 		if err != nil {
 			return results, err
 		}
 
-		result.Rule = rule
-		results = append(results, result)
+		for _, result := range r {
+			result.Commit = c
+			result.Rule = rule
+			results = append(results, result)
+		}
 	}
 
 	return results, nil
@@ -181,11 +187,43 @@ func Commit(rules []Rule, r *git.Repository, c *object.Commit, isHead bool) (Res
 
 // Result is the result for a single validation of a commit.
 type Result struct {
-	Rule    Rule
-	Pass    bool
-	Message string
+	Rule     Rule
+	Code     string
+	Severity Severity
+	Pass     bool
+	Message  string
+	Location string
 
 	Commit *object.Commit
+}
+
+func (r Result) String() string {
+	buf := bytes.NewBuffer(nil)
+	if r.Pass {
+		fmt.Fprintf(buf, color.GreenString("PASS"))
+	} else {
+		fmt.Fprintf(buf, color.RedString("FAIL"))
+	}
+
+	fmt.Fprintf(buf, " [%s", r.Rule.ID())
+	if r.Code != "" {
+		fmt.Fprintf(buf, "|%s", r.Code)
+	}
+	buf.WriteString("] ")
+
+	if r.Severity != 0 {
+		fmt.Fprintf(buf, "-%s- ", r.Severity)
+	} else {
+		fmt.Fprintf(buf, "-%s- ", r.Rule.Severity())
+	}
+
+	buf.WriteString(r.Message)
+
+	if r.Location != "" {
+		fmt.Fprintf(buf, " (%s)", r.Location)
+	}
+
+	return buf.String()
 }
 
 // Results is a set of results. This is type makes it easy for the following function.

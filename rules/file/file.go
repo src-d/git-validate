@@ -48,8 +48,9 @@ func (r *Rule) Description() string {
 	return fmt.Sprintf("file %q shoud be present", r.Config.Present)
 }
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result, err error) {
-	vr.Commit = c
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, error) {
+	res := compliance.Result{}
+	res.Commit = c
 
 	var found int
 	for _, present := range r.Config.Present {
@@ -59,7 +60,7 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result,
 				continue
 			}
 
-			return vr, err
+			return []compliance.Result{res}, err
 		}
 
 		if f.Size > 0 {
@@ -68,12 +69,12 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result,
 	}
 
 	if found != len(r.Config.Present) {
-		vr.Pass = false
-		vr.Message = fmt.Sprintf("does not have mandatory files %q", r.Config.Present)
+		res.Pass = false
+		res.Message = fmt.Sprintf("does not have mandatory files %q", r.Config.Present)
 	} else {
-		vr.Pass = true
-		vr.Message = "has all the mandatory files"
+		res.Pass = true
+		res.Message = "has all the mandatory files"
 	}
 
-	return vr, nil
+	return []compliance.Result{res}, nil
 }

@@ -38,32 +38,33 @@ func (*Rule) Description() string {
 	return "commit subject are strictly less than 90 (github ellipsis length)"
 }
 
-func (*Rule) Check(_ *git.Repository, c *object.Commit) (vr compliance.Result, err error) {
+func (*Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, error) {
+	res := compliance.Result{}
 	if c.NumParents() > 1 {
-		vr.Pass = true
-		vr.Message = "merge commits do not require length check"
-		return vr, nil
+		res.Pass = true
+		res.Message = "merge commits do not require length check"
+		return []compliance.Result{res}, nil
 	}
 
 	if c.Message == "" {
-		vr.Pass = false
-		vr.Message = "commit subject is empty"
-		return
+		res.Pass = false
+		res.Message = "commit subject is empty"
+		return []compliance.Result{res}, nil
 	}
 
 	lines := strings.SplitN(c.Message, "\n", 2)
 	if len(lines[0]) >= 90 {
-		vr.Pass = false
-		vr.Message = "commit subject exceeds 90 characters"
-		return
+		res.Pass = false
+		res.Message = "commit subject exceeds 90 characters"
+		return []compliance.Result{res}, nil
 	}
 
-	vr.Pass = true
+	res.Pass = true
 	if len(lines[0]) > 72 {
-		vr.Message = "commit subject is under 90 characters, but is still more than 72 chars"
+		res.Message = "commit subject is under 90 characters, but is still more than 72 chars"
 	} else {
-		vr.Message = "commit subject is 72 characters or less! *yay*"
+		res.Message = "commit subject is 72 characters or less! *yay*"
 	}
 
-	return
+	return []compliance.Result{res}, nil
 }

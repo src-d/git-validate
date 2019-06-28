@@ -39,7 +39,6 @@ func NewRunner(root string, config string, verbose bool) (*Runner, error) {
 		return nil, err
 	}
 
-	fmt.Println(err, runner.Config)
 	return runner, nil
 }
 
@@ -72,6 +71,7 @@ func (r *Runner) Run() (compliance.Results, error) {
 		results = append(results, vr...)
 
 		_, fail := vr.PassFail()
+
 		if os.Getenv("QUIET") != "" {
 			if fail != 0 {
 				for _, res := range vr {
@@ -96,15 +96,8 @@ func (r *Runner) Run() (compliance.Results, error) {
 		}
 
 		for _, res := range vr {
-			if r.Verbose {
-				result := color.GreenString("PASS")
-				if !res.Pass {
-					result = color.RedString("FAIL")
-				}
-
-				fmt.Printf("   └ %s %s [%s] %s\n", res.Rule.Severity(), result, res.Rule.ID(), res.Message)
-			} else if !res.Pass {
-				fmt.Printf("   └ %s %s [%s] %s\n", res.Rule.Severity(), color.RedString("FAIL"), res.Rule.ID(), res.Message)
+			if r.Verbose || !res.Pass {
+				fmt.Printf("   └ %s\n", res)
 			}
 		}
 

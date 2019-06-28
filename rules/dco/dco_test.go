@@ -16,7 +16,7 @@ func TestRuleCheck_Fail(t *testing.T) {
 
 	result, err := dco.Check(nil, &object.Commit{Message: "foo"})
 	assert.NoError(t, err)
-	assert.False(t, result.Pass)
+	assert.False(t, result[0].Pass)
 }
 
 func TestRuleCheck_Ignore(t *testing.T) {
@@ -28,7 +28,7 @@ func TestRuleCheck_Ignore(t *testing.T) {
 	}})
 
 	assert.NoError(t, err)
-	assert.True(t, result.Pass)
+	assert.True(t, result[0].Pass)
 }
 
 func TestRuleCheck_Pass(t *testing.T) {
@@ -37,7 +37,7 @@ func TestRuleCheck_Pass(t *testing.T) {
 
 	result, err := dco.Check(nil, &object.Commit{Message: "Signed-off-by: Máximo Cuadros <mcuadros@gmail.com>"})
 	assert.NoError(t, err)
-	assert.True(t, result.Pass)
+	assert.True(t, result[0].Pass)
 }
 
 func TestKindRule(t *testing.T) {

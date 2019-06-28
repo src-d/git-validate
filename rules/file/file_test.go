@@ -50,6 +50,6 @@ func TestRuleCheck_Pass(t *testing.T) {
 
 		result, err := dco.Check(r, c)
 		assert.NoError(t, err)
-		assert.Equal(t, result.Pass, tc.pass)
+		assert.Equal(t, result[0].Pass, tc.pass)
 	}
 }

@@ -26,7 +26,7 @@ func TestRuleCheck(t *testing.T) {
 	for _, tc := range testCases {
 		result, err := short.Check(nil, &object.Commit{Message: tc.msg})
 		assert.NoError(t, err)
-		assert.Equal(t, tc.pass, result.Pass, tc.pass)
+		assert.Equal(t, tc.pass, result[0].Pass, tc.pass)
 	}
 }
 
