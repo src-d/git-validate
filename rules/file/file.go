@@ -48,33 +48,23 @@ func (r *Rule) Description() string {
 	return fmt.Sprintf("file %q shoud be present", r.Config.Present)
 }
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, error) {
-	res := compliance.Result{}
-	res.Commit = c
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Result, error) {
+	var results []*compliance.Result
 
-	var found int
 	for _, present := range r.Config.Present {
-		f, err := c.File(present)
-		if err != nil {
-			if err == object.ErrFileNotFound {
-				continue
-			}
-
-			return []compliance.Result{res}, err
+		_, err := c.File(present)
+		if err == nil {
+			continue
 		}
 
-		if f.Size > 0 {
-			found++
+		if err == object.ErrFileNotFound {
+			results = append(results, &compliance.Result{
+				Rule:     r,
+				Message:  fmt.Sprintf("unable to find mandatory file %q", present),
+				Location: &compliance.CommitLocation{Commit: c},
+			})
 		}
 	}
 
-	if found != len(r.Config.Present) {
-		res.Pass = false
-		res.Message = fmt.Sprintf("does not have mandatory files %q", r.Config.Present)
-	} else {
-		res.Pass = true
-		res.Message = "has all the mandatory files"
-	}
-
-	return []compliance.Result{res}, nil
+	return results, nil
 }

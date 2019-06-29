@@ -37,15 +37,9 @@ type Rule struct {
 
 var ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)
 
-func (*Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, error) {
-	r := compliance.Result{}
-	r.Commit = c
-	r.Severity = compliance.Medium
-
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Result, error) {
 	if c.NumParents() > 1 {
-		r.Pass = true
-		r.Message = "merge commits do not require DCO"
-		return []compliance.Result{r}, nil
+		return nil, nil
 	}
 
 	hasValid := false
@@ -55,13 +49,13 @@ func (*Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, er
 		}
 	}
 
-	if !hasValid {
-		r.Pass = false
-		r.Message = "does not have a valid DCO"
-	} else {
-		r.Pass = true
-		r.Message = "has a valid DCO"
+	if hasValid {
+		return nil, nil
 	}
 
-	return []compliance.Result{r}, nil
+	return []*compliance.Result{{
+		Rule:     r,
+		Message:  "does not have a valid DCO",
+		Location: &compliance.CommitLocation{Commit: c},
+	}}, nil
 }

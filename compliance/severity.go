@@ -42,7 +42,7 @@ func (s Severity) String() string {
 	case High:
 		return "HIGH"
 	case Critical:
-		return "CRITITCAL"
+		return "CRITICAL"
 	default:
 		return fmt.Sprintf("UNKNOWN(%d)", s)
 	}

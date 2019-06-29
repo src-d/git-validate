@@ -7,10 +7,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/src-d/git-compliance/compliance"
+
 	_ "github.com/src-d/git-compliance/rules/dco"
 	_ "github.com/src-d/git-compliance/rules/dockerfile"
 	_ "github.com/src-d/git-compliance/rules/file"
 	_ "github.com/src-d/git-compliance/rules/shortsubject"
+	_ "github.com/src-d/git-compliance/rules/stalerefs"
+	"gopkg.in/src-d/go-git.v4"
 )
 
 var (
@@ -38,18 +42,40 @@ func main() {
 		return
 	}
 
-	runner, err := NewRunner(*flDir, "compliance.yml", *flVerbose)
+	var err error
+	file, err := os.Open("compliance.yml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	results, err := runner.Run()
+	defer file.Close()
+
+	var cfg compliance.Config
+	if err := cfg.Decode(file); err != nil {
+		log.Fatal(err)
+	}
+
+	runner, err := compliance.NewRunner(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, fail := results.PassFail()
-	if fail > 0 {
-		fmt.Printf("%d commits to fix\n", fail)
+
+	r, err := git.PlainOpen(*flDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	results, err := runner.Run(r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, result := range results {
+		fmt.Println(result)
+	}
+
+	if len(results) > 0 {
+		fmt.Printf("%d commits to fix\n", len(results))
 		os.Exit(1)
 	}
 

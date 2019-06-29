@@ -36,12 +36,12 @@ type dummyRule struct {
 	err  error
 }
 
-func (r *dummyRule) Check(*git.Repository, *object.Commit) ([]*Result, error) {
+func (r *dummyRule) Check(*git.Repository, *object.Commit) ([]*Report, error) {
 	if !r.fail {
 		return nil, nil
 	}
 
-	return []*Result{{Message: r.msg}}, r.err
+	return []*Report{{Message: r.msg}}, r.err
 }
 
 func TestRegisterRuleKind(t *testing.T) {

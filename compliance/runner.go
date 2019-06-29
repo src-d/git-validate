@@ -48,8 +48,8 @@ func (r *Runner) loadConfig(cfg *Config) error {
 }
 
 // Run executes all the rules against the given repository.
-func (r *Runner) Run(repository *git.Repository) ([]*Result, error) {
-	var results []*Result
+func (r *Runner) Run(repository *git.Repository) ([]*Report, error) {
+	var results []*Report
 
 	if err := r.runbyLevel(Repository, repository, nil, &results); err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (r *Runner) Run(repository *git.Repository) ([]*Result, error) {
 	})
 }
 
-func (r *Runner) runbyLevel(l Level, repository *git.Repository, commit *object.Commit, results *[]*Result) error {
+func (r *Runner) runbyLevel(l Level, repository *git.Repository, commit *object.Commit, results *[]*Report) error {
 	for _, rule := range r.rulesbyLevel[l] {
 		res, err := rule.Check(repository, commit)
 		if err != nil {

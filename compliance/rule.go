@@ -28,7 +28,7 @@ type Rule interface {
 	// Description longer description for readability.
 	Description() string
 	// Check evaluate a repository and a commit againts this rule.
-	Check(*git.Repository, *object.Commit) ([]*Result, error)
+	Check(*git.Repository, *object.Commit) ([]*Report, error)
 }
 
 // BaseRule used to avoid code duplication on the creation of new rules and kinds.

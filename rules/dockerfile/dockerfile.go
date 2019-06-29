@@ -1,9 +1,9 @@
 package dockerfile
 
 import (
-	"fmt"
 	"io"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/src-d/git-compliance/compliance"
@@ -51,22 +51,19 @@ type Rule struct {
 
 const DockerfilePrefix = "Dockerfile"
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, error) {
-	res := compliance.Result{}
-	res.Commit = c
-	res.Severity = compliance.Medium
-
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Result, error) {
 	iter, err := c.Files()
 	if err != nil {
-		return []compliance.Result{res}, err
+		return nil, err
 	}
 
-	var results []compliance.Result
-	err = iter.ForEach(func(f *object.File) error {
+	var results []*compliance.Result
+	return results, iter.ForEach(func(f *object.File) error {
 		filename := filepath.Base(f.Name)
 		if !strings.HasPrefix(filename, DockerfilePrefix) {
 			return nil
 		}
+
 		df, err := f.Reader()
 		if err != nil {
 			return err
@@ -74,7 +71,7 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, 
 
 		defer df.Close()
 
-		result, err := r.validateDockerfile(filename, df)
+		result, err := r.validateDockerfile(c, filename, df)
 		if err != nil {
 			return err
 		}
@@ -82,44 +79,37 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]compliance.Result, 
 		results = append(results, result...)
 		return nil
 	})
-
-	return results, nil
 }
 
-func (r *Rule) validateDockerfile(filename string, df io.Reader) ([]compliance.Result, error) {
+func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reader) ([]*compliance.Result, error) {
 	ast, err := parser.Parse(df)
 	if err != nil {
 		return nil, err
 	}
 
-	var results []compliance.Result
+	var results []*compliance.Result
 	for _, rule := range rules.Rules {
 		result, _ := rule.ValidateFunc(ast.AST)
-		results = append(results, r.toComplianceResult(filename, rule, result)...)
+		results = append(results, r.toComplianceResult(c, filename, rule, result)...)
 	}
 
 	return results, err
 }
-func (r *Rule) toComplianceResult(filename string, rule *rules.Rule, results []rules.ValidateResult) []compliance.Result {
+func (r *Rule) toComplianceResult(c *object.Commit, filename string, rule *rules.Rule, results []rules.ValidateResult) []*compliance.Result {
 	if len(results) == 0 {
-		return []compliance.Result{{
-			Rule:    r,
-			Code:    rule.Code,
-			Pass:    true,
-			Message: rule.Description,
-		}}
+		return nil
 	}
 
 	msgs := rules.CreateMessage(rule, results)
-	list := make([]compliance.Result, len(results))
+	list := make([]*compliance.Result, len(results))
 	for i, msg := range msgs {
 		parts := strings.SplitN(msg, " ", 3)
+		line, _ := strconv.Atoi(strings.Replace(parts[0], "", "#", -1))
 
-		list[i] = compliance.Result{
+		list[i] = &compliance.Result{
 			Rule:     r,
 			Code:     rule.Code,
-			Pass:     false,
-			Location: fmt.Sprintf("%s:%s", filename, parts[0]),
+			Location: &compliance.LineLocation{Commit: c, Filename: filename, Line: line},
 			Message:  strings.Trim(parts[2], "\n"),
 		}
 	}
