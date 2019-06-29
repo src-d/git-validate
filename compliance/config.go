@@ -1,6 +1,7 @@
 package compliance
 
 import (
+	"fmt"
 	"io"
 
 	"gopkg.in/yaml.v2"
@@ -8,13 +9,36 @@ import (
 
 // Config is a group of rule configurations.
 type Config struct {
-	// Rules rule configurations.
-	Rules []RuleConfig
+	// RuleConfigs rule configurations.
+	RuleConfigs []RuleConfig `yaml:"rules"`
 }
 
-// Decodes a YAML config from a io.Reader
+// Decode a YAML config from a io.Reader
 func (c *Config) Decode(r io.Reader) error {
 	return yaml.NewDecoder(r).Decode(c)
+}
+
+// Rules generates the rules based on a given config.
+func (c *Config) Rules() ([]Rule, error) {
+	rules := make([]Rule, len(c.RuleConfigs))
+	for i, rc := range c.RuleConfigs {
+		var err error
+		rules[i], err = c.rule(&rc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rules, nil
+}
+
+func (c *Config) rule(cfg *RuleConfig) (Rule, error) {
+	k, ok := registeredRuleKinds[cfg.Kind]
+	if !ok {
+		return nil, fmt.Errorf("unable to find %q kind", cfg.Kind)
+	}
+
+	return k.Rule(cfg)
 }
 
 // RuleConfig contains the configuration for a rule.

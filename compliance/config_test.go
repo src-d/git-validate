@@ -7,6 +7,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestConfigRules(t *testing.T) {
+	RegisterRuleKind(&dummyKind{name: "foo"})
+
+	cfg := Config{RuleConfigs: []RuleConfig{{
+		Kind: "foo",
+	}}}
+
+	rules, err := cfg.Rules()
+	assert.NoError(t, err)
+	assert.Len(t, rules, 1)
+	assert.NotNil(t, rules[0])
+}
+
+func TestConfigRules_NotFound(t *testing.T) {
+	RegisterRuleKind(&dummyKind{name: "foo"})
+
+	cfg := Config{RuleConfigs: []RuleConfig{{
+		Kind: "bar",
+	}}}
+
+	rules, err := cfg.Rules()
+	assert.Errorf(t, err, "unable to find")
+	assert.Len(t, rules, 0)
+}
+
 const cfgExample = `
 rules:
   - id: bar
@@ -23,20 +48,20 @@ func TestConfigDecode(t *testing.T) {
 	err := cfg.Decode(strings.NewReader(cfgExample))
 
 	assert.NoError(t, err)
-	assert.Len(t, cfg.Rules, 4)
-	assert.Equal(t, cfg.Rules[0].ID, "bar")
-	assert.Equal(t, cfg.Rules[0].Severity, High)
-	assert.Equal(t, cfg.Rules[0].Params["foo"], 42)
+	assert.Len(t, cfg.RuleConfigs, 4)
+	assert.Equal(t, cfg.RuleConfigs[0].ID, "bar")
+	assert.Equal(t, cfg.RuleConfigs[0].Severity, High)
+	assert.Equal(t, cfg.RuleConfigs[0].Params["foo"], 42)
 }
 
-const cfgExample_InvalidSeverity = `
+const cfgExampleInvalidSeverity = `
 rules:
   - severity: foo 
 `
 
 func TestConfigDecode_Error(t *testing.T) {
 	cfg := &Config{}
-	err := cfg.Decode(strings.NewReader(cfgExample_InvalidSeverity))
+	err := cfg.Decode(strings.NewReader(cfgExampleInvalidSeverity))
 	assert.Error(t, err)
 }
 
