@@ -95,6 +95,10 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report,
 func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reader) ([]*compliance.Report, error) {
 	ast, err := parser.Parse(df)
 	if err != nil {
+		if err.Error() == "file with no instructions." {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

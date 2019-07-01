@@ -39,6 +39,18 @@ func TestRuleCheck(t *testing.T) {
 	assert.Equal(t, report.Location.String(), "Dockerfile:1@31d80c")
 }
 
+func TestRuleCheck_Empty(t *testing.T) {
+	r, c, err := CommitWithFile("Dockerfile", "")
+	assert.NoError(t, err)
+
+	df, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	assert.NoError(t, err)
+
+	result, err := df.Check(r, c)
+	assert.NoError(t, err)
+	assert.Len(t, result, 0)
+}
+
 func TestRuleCheck_Nested(t *testing.T) {
 	r, c, err := CommitWithFile("foo/Dockerfile", "FROM debian")
 	assert.NoError(t, err)
