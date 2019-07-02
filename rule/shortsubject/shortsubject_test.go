@@ -15,18 +15,18 @@ func TestRuleCheck(t *testing.T) {
 	assert.NoError(t, err)
 
 	testCases := []struct {
-		msg  string
-		pass bool
+		msg string
+		len int
 	}{
-		{"", false},
-		{"foo", true},
-		{strings.Repeat("0", 90), false},
+		{"", 1},
+		{"foo", 0},
+		{strings.Repeat("0", 90), 1},
 	}
 
 	for _, tc := range testCases {
 		result, err := short.Check(nil, &object.Commit{Message: tc.msg})
 		assert.NoError(t, err)
-		assert.Equal(t, tc.pass, result[0].Pass, tc.pass)
+		assert.Len(t, result, tc.len)
 	}
 }
 
@@ -34,5 +34,5 @@ func TestKindRule(t *testing.T) {
 	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
 	assert.NoError(t, err)
 
-	assert.Equal(t, dco.ID(), "short-subject")
+	assert.Equal(t, dco.ID(), "SHORT-SUBJECT")
 }
