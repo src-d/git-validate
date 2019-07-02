@@ -16,7 +16,8 @@ func init() {
 var defaultConfig = &validate.RuleConfig{
 	ID:          "short-subject",
 	Severity:    validate.Low,
-	Description: "commit subject are strictly less than 90 (github ellipsis length)",
+	Short:       "Commit subject are strictly less than 90 characters",
+	Description: "Commit subject are strictly less than 90 characters",
 }
 
 type Kind struct{}
@@ -34,10 +35,6 @@ type Rule struct {
 	validate.BaseRule
 }
 
-func (*Rule) Description() string {
-	return "commit subject are strictly less than 90 (github ellipsis length)"
-}
-
 func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
 	res := &validate.Report{
 		Rule:     r,
@@ -49,15 +46,19 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, e
 	}
 
 	if c.Message == "" {
+		res.Pass = false
 		res.Message = "commit subject is empty"
 		return []*validate.Report{res}, nil
 	}
 
 	lines := strings.SplitN(c.Message, "\n", 2)
 	if len(lines[0]) >= 90 {
+		res.Pass = false
 		res.Message = "commit subject exceeds 90 characters"
 		return []*validate.Report{res}, nil
 	}
 
-	return nil, nil
+	res.Pass = true
+	res.Message = "commit subject is strictly less then 90 characters"
+	return []*validate.Report{res}, nil
 }

@@ -15,18 +15,21 @@ func TestRuleCheck(t *testing.T) {
 	assert.NoError(t, err)
 
 	testCases := []struct {
-		msg string
-		len int
+		msg  string
+		pass []bool
 	}{
-		{"", 1},
-		{"foo", 0},
-		{strings.Repeat("0", 90), 1},
+		{"", []bool{false}},
+		{"foo", []bool{true}},
+		{strings.Repeat("0", 90), []bool{false}},
 	}
 
 	for _, tc := range testCases {
 		result, err := short.Check(nil, &object.Commit{Message: tc.msg})
 		assert.NoError(t, err)
-		assert.Len(t, result, tc.len)
+		assert.Len(t, result, len(tc.pass))
+		for i, pass := range tc.pass {
+			assert.Equal(t, pass, result[i].Pass)
+		}
 	}
 }
 
