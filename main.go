@@ -11,6 +11,7 @@ import (
 	_ "github.com/src-d/git-validate/rule/dco"
 	_ "github.com/src-d/git-validate/rule/dockerfile"
 	_ "github.com/src-d/git-validate/rule/file"
+	_ "github.com/src-d/git-validate/rule/largeblob"
 	_ "github.com/src-d/git-validate/rule/shortsubject"
 	_ "github.com/src-d/git-validate/rule/stalebranch"
 	"gopkg.in/src-d/go-git.v4"

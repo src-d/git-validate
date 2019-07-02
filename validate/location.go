@@ -35,6 +35,17 @@ func (loc *CommitLocation) String() string {
 	return loc.Commit.Hash.String()[:6]
 }
 
+// BlobLocation the rules was triggered at a git blob.
+type BlobLocation struct {
+	Blob *object.Blob
+}
+
+// IsLocation honors the Location interface.
+func (BlobLocation) IsLocation() {}
+func (loc *BlobLocation) String() string {
+	return loc.Blob.Hash.String()[:6]
+}
+
 // FileLocation the rules was triggered at a file in a commit.
 type FileLocation struct {
 	Commit   *object.Commit

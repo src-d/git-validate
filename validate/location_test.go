@@ -27,6 +27,15 @@ func TestCommitLocation(t *testing.T) {
 	assert.Equal(t, "000000", loc.String())
 }
 
+func TestBlobLocation(t *testing.T) {
+	var loc Location
+	loc = &BlobLocation{
+		Blob: &object.Blob{},
+	}
+
+	assert.Equal(t, "000000", loc.String())
+}
+
 func TestFileLocation(t *testing.T) {
 	var loc Location
 	loc = &FileLocation{
