@@ -61,7 +61,7 @@ func (r *Runner) Run(repository *git.Repository) ([]*Report, error) {
 	}
 
 	isHead := true
-	return results, iter.ForEach(func(c *object.Commit) error {
+	err = iter.ForEach(func(c *object.Commit) error {
 		if err := r.runbyLevel(History, repository, c, &results); err != nil {
 			return err
 		}
@@ -73,6 +73,13 @@ func (r *Runner) Run(repository *git.Repository) ([]*Report, error) {
 		isHead = false
 		return r.runbyLevel(HEAD, repository, c, &results)
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.filterPassResults(results)
+
 }
 
 func (r *Runner) runbyLevel(l Level, repository *git.Repository, commit *object.Commit, results *[]*Report) error {
@@ -86,4 +93,34 @@ func (r *Runner) runbyLevel(l Level, repository *git.Repository, commit *object.
 	}
 
 	return nil
+}
+
+func (r *Runner) filterPassResults(reports []*Report) ([]*Report, error) {
+	nonPass := make(map[string]bool, 0)
+	for _, report := range reports {
+		id := report.Rule.ID()
+		if !nonPass[id] && !report.Pass {
+			nonPass[id] = true
+		}
+	}
+
+	output := make([]*Report, 0)
+	added := make(map[string]bool, 0)
+	for _, report := range reports {
+		if !report.Pass {
+			output = append(output, report)
+			continue
+		}
+
+		id := report.Rule.ID()
+		if !nonPass[id] && !added[id] {
+			report.Location = nil
+			report.Message = report.Rule.ShortDescription()
+			output = append(output, report)
+			added[id] = true
+			continue
+		}
+	}
+
+	return output, nil
 }

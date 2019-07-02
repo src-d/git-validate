@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestConfig_Default(t *testing.T) {
+	RegisterRuleKind(&dummyKind{name: "foo"})
+
+	cfg := Config{}
+
+	rules, err := cfg.Rules()
+	assert.NoError(t, err)
+	assert.Len(t, rules, 1)
+	assert.NotNil(t, rules[0])
+}
+
 func TestConfigRules(t *testing.T) {
 	RegisterRuleKind(&dummyKind{name: "foo"})
 

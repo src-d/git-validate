@@ -22,21 +22,25 @@ func TestRunnerRun(t *testing.T) {
 		name string
 		lvl  Level
 		len  int
+		fail bool
 	}{
-		{"head", HEAD, 1},
-		{"hisotry", History, 8},
-		{"repository", Repository, 1},
+		{"head", HEAD, 1, true},
+		{"hisotry", History, 1, false},
+		{"hisotry-fail", History, 8, true},
+		{"repository", Repository, 1, false},
 	}
 
 	for _, tc := range testCases {
 		RegisterRuleKind(&dummyKind{
 			name: tc.name,
+			msg:  "foo",
 			lvl:  tc.lvl,
-			fail: true,
+			fail: tc.fail,
 		})
 
 		cfg := Config{RuleConfigs: []RuleConfig{{
-			Kind: tc.name,
+			Kind:  tc.name,
+			Short: tc.name,
 		}}}
 
 		r, err := NewRunner(&cfg)
@@ -44,6 +48,6 @@ func TestRunnerRun(t *testing.T) {
 
 		result, err := r.Run(basic)
 		assert.NoError(t, err)
-		assert.Len(t, result, tc.len)
+		assert.Len(t, result, tc.len, tc.name)
 	}
 }

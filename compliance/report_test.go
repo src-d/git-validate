@@ -15,10 +15,11 @@ func TestReportString(t *testing.T) {
 			ID:       "foo",
 			Severity: High,
 		})},
+		Pass:    true,
 		Message: "bar",
 	}
 
-	assert.Equal(t, "      HIGH [FOO] bar", r.String())
+	assert.Equal(t, "PASS      HIGH [FOO] bar", r.String())
 }
 
 func TestReportString_WithSeverityCodeAndLocation(t *testing.T) {
@@ -34,5 +35,5 @@ func TestReportString_WithSeverityCodeAndLocation(t *testing.T) {
 		Location: &CommitLocation{Commit: &object.Commit{}},
 	}
 
-	assert.Equal(t, "  CRITICAL [FOO|0001] bar (000000)", r.String())
+	assert.Equal(t, "FAIL  CRITICAL [FOO|0001] bar (000000)", r.String())
 }

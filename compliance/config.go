@@ -20,6 +20,10 @@ func (c *Config) Decode(r io.Reader) error {
 
 // Rules generates the rules based on a given config.
 func (c *Config) Rules() ([]Rule, error) {
+	if len(c.RuleConfigs) == 0 {
+		return c.defaultRules(), nil
+	}
+
 	rules := make([]Rule, len(c.RuleConfigs))
 	for i, rc := range c.RuleConfigs {
 		var err error
@@ -30,6 +34,17 @@ func (c *Config) Rules() ([]Rule, error) {
 	}
 
 	return rules, nil
+}
+
+func (c *Config) defaultRules() []Rule {
+	rules := make([]Rule, len(registeredRuleKinds))
+	var i int
+	for _, k := range registeredRuleKinds {
+		rules[i], _ = k.Rule(&RuleConfig{})
+		i++
+	}
+
+	return rules
 }
 
 func (c *Config) rule(cfg *RuleConfig) (Rule, error) {
@@ -47,6 +62,10 @@ type RuleConfig struct {
 	Kind string
 	// ID short self-explenatory id of the rule.
 	ID string
+	// Short description describing the rule. Avoid starting the phrase with
+	// "enforce", or similar wording, just describes what aim to archive. Eg:
+	// All commits are Signed-Off
+	Short string
 	// Description longer description for readability.
 	Description string
 	// Severity of the rule.
@@ -73,6 +92,10 @@ func (c *RuleConfig) Merge(cfg *RuleConfig) {
 
 	if c.Description == "" {
 		c.Description = cfg.Description
+	}
+
+	if c.Short == "" {
+		c.Short = cfg.Short
 	}
 
 	if c.Severity == 0 {
