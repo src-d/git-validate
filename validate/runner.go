@@ -1,4 +1,4 @@
-package compliance
+package validate
 
 import (
 	"gopkg.in/src-d/go-git.v4"

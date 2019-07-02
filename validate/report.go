@@ -1,4 +1,4 @@
-package compliance
+package validate
 
 import (
 	"bytes"

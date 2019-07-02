@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"gopkg.in/src-d/go-git.v4"
@@ -14,12 +14,12 @@ import (
 )
 
 func init() {
-	compliance.RegisterRuleKind(&Kind{})
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var defaultConfig = &compliance.RuleConfig{
+var defaultConfig = &validate.RuleConfig{
 	ID:          "dockerfile",
-	Severity:    compliance.Medium,
+	Severity:    validate.Medium,
 	Description: "",
 }
 
@@ -29,11 +29,11 @@ func (*Kind) Name() string {
 	return "dockerfile"
 }
 
-func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
 	cfg.Merge(defaultConfig)
 
 	r := &Rule{
-		BaseRule: compliance.NewBaseRule(compliance.HEAD, *cfg),
+		BaseRule: validate.NewBaseRule(validate.HEAD, *cfg),
 	}
 
 	return r, cfg.LoadParamsTo(&r.Config)
@@ -44,18 +44,18 @@ type RuleConfig struct {
 }
 
 type Rule struct {
-	compliance.BaseRule
+	validate.BaseRule
 	Config RuleConfig
 }
 
 const DockerfilePrefix = "Dockerfile"
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report, error) {
-	res := &compliance.Report{}
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
+	res := &validate.Report{}
 
 	iter, err := c.Files()
 	if err != nil {
-		return []*compliance.Report{res}, err
+		return []*validate.Report{res}, err
 	}
 
 	err = iter.ForEach(func(f *object.File) error {
@@ -72,7 +72,7 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report,
 		return nil
 	})
 
-	return []*compliance.Report{res}, nil
+	return []*validate.Report{res}, nil
 }
 
 func parseDockerfile(r io.Reader) error {

@@ -4,19 +4,19 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 func init() {
-	compliance.RegisterRuleKind(&Kind{})
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var defaultConfig = &compliance.RuleConfig{
+var defaultConfig = &validate.RuleConfig{
 	ID:       "dco",
-	Severity: compliance.Medium,
+	Severity: validate.Medium,
 	Short:    "All commits are signed-off",
 	Description: "" +
 		"Enforces the [Developer Certificate of Origin](https://developercertificate.org/) " +
@@ -28,27 +28,27 @@ var defaultConfig = &compliance.RuleConfig{
 // signed-off.
 type Kind struct{}
 
-// Name it honors the compliance.RuleKind interface.
+// Name it honors the validate.RuleKind interface.
 func (*Kind) Name() string {
 	return "dco"
 }
 
-// Rule it honors the compliance.RuleKind interface.
-func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+// Rule it honors the validate.RuleKind interface.
+func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
 	cfg.Merge(defaultConfig)
-	return &Rule{compliance.NewBaseRule(compliance.History, *cfg)}, nil
+	return &Rule{validate.NewBaseRule(validate.History, *cfg)}, nil
 }
 
 // Rule of a dco.Kind
 type Rule struct {
-	compliance.BaseRule
+	validate.BaseRule
 }
 
 // ValidDCO regexp used to validate the commit message.
 var ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)
 
-// Check it honors the compliance.Rule interface.
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report, error) {
+// Check it honors the validate.Rule interface.
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
 	var msg string
 	if c.NumParents() > 1 {
 		return nil, nil
@@ -63,10 +63,10 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report,
 		}
 	}
 
-	return []*compliance.Report{{
+	return []*validate.Report{{
 		Rule:     r,
 		Pass:     hasValid,
 		Message:  msg,
-		Location: &compliance.CommitLocation{Commit: c},
+		Location: &validate.CommitLocation{Commit: c},
 	}}, nil
 }

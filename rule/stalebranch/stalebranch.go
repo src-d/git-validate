@@ -5,7 +5,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/dustin/go-humanize"
 	"gopkg.in/src-d/go-git.v4"
@@ -14,12 +14,12 @@ import (
 )
 
 func init() {
-	compliance.RegisterRuleKind(&Kind{})
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var defaultConfig = &compliance.RuleConfig{
+var defaultConfig = &validate.RuleConfig{
 	ID:       "stale-branch",
-	Severity: compliance.Medium,
+	Severity: validate.Medium,
 	Description: "" +
 		"Branch management is an important part of the Git workflow. After some " +
 		"time, your list of branches may grow, so it's a good idea to delete " +
@@ -30,24 +30,24 @@ var defaultConfig = &compliance.RuleConfig{
 // Kind describes a rule kind that validates the age of the branches.
 type Kind struct{}
 
-// Name it honors the compliance.RuleKind interface.
+// Name it honors the validate.RuleKind interface.
 func (*Kind) Name() string {
 	return "stale-branch"
 }
 
-// Rule it honors the compliance.RuleKind interface.
-func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+// Rule it honors the validate.RuleKind interface.
+func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
 	cfg.Merge(defaultConfig)
-	return &Rule{compliance.NewBaseRule(compliance.Repository, *cfg)}, nil
+	return &Rule{validate.NewBaseRule(validate.Repository, *cfg)}, nil
 }
 
 // Rule of a stalebranch.Kind
 type Rule struct {
-	compliance.BaseRule
+	validate.BaseRule
 }
 
-// Check it honors the compliance.Rule interface.
-func (r *Rule) Check(repository *git.Repository, _ *object.Commit) ([]*compliance.Report, error) {
+// Check it honors the validate.Rule interface.
+func (r *Rule) Check(repository *git.Repository, _ *object.Commit) ([]*validate.Report, error) {
 	iter, err := repository.References()
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *Rule) Check(repository *git.Repository, _ *object.Commit) ([]*complianc
 		return nil, err
 	}
 
-	var reports []*compliance.Report
+	var reports []*validate.Report
 	return reports, iter.ForEach(func(ref *plumbing.Reference) error {
 		ok, err := r.isValidBranch(head.Target(), ref)
 		if err != nil {
@@ -101,17 +101,17 @@ func (r *Rule) isValidBranch(head plumbing.ReferenceName, ref *plumbing.Referenc
 
 const defaultAge = time.Hour * 24 * 30 * 6
 
-func (r *Rule) checkReference(repository *git.Repository, ref *plumbing.Reference) (*compliance.Report, error) {
+func (r *Rule) checkReference(repository *git.Repository, ref *plumbing.Reference) (*validate.Report, error) {
 	c, err := repository.CommitObject(ref.Hash())
 	if err != nil {
 		return nil, err
 	}
 
 	if time.Since(c.Committer.When) > defaultAge {
-		return &compliance.Report{
+		return &validate.Report{
 			Rule:     r,
-			Location: &compliance.ReferenceLocation{Reference: ref},
-			Severity: compliance.Low,
+			Location: &validate.ReferenceLocation{Reference: ref},
+			Severity: validate.Low,
 			Message:  fmt.Sprintf("stalled branch, last commit was done %s, consider delete it", humanize.Time(c.Author.When)),
 		}, nil
 	}

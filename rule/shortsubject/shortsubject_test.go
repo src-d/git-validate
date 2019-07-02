@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 func TestRuleCheck(t *testing.T) {
-	short, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	short, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	testCases := []struct {
@@ -31,7 +31,7 @@ func TestRuleCheck(t *testing.T) {
 }
 
 func TestKindRule(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, dco.ID(), "SHORT-SUBJECT")

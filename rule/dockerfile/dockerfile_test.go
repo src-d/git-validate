@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-billy.v4/memfs"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestKindRule(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, dco.ID(), "DOCKERFILE")
@@ -25,7 +25,7 @@ func TestRuleCheck(t *testing.T) {
 	r, c, err := CommitWithFile("Dockerfile", "FROM debian")
 	assert.NoError(t, err)
 
-	df, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	df, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := df.Check(r, c)
@@ -44,7 +44,7 @@ func TestRuleCheck_Empty(t *testing.T) {
 	r, c, err := CommitWithFile("Dockerfile", "")
 	assert.NoError(t, err)
 
-	df, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	df, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := df.Check(r, c)
@@ -56,7 +56,7 @@ func TestRuleCheck_Nested(t *testing.T) {
 	r, c, err := CommitWithFile("foo/Dockerfile", "FROM debian")
 	assert.NoError(t, err)
 
-	df, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	df, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := df.Check(r, c)
@@ -70,7 +70,7 @@ func TestRuleCheck_Ignore(t *testing.T) {
 	r, c, err := CommitWithFile("foo/Dockerfile", "FROM debian")
 	assert.NoError(t, err)
 
-	df, err := (&Kind{}).Rule(&compliance.RuleConfig{
+	df, err := (&Kind{}).Rule(&validate.RuleConfig{
 		Params: map[string]interface{}{
 			"ignored": []string{"DL3006"},
 		},

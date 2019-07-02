@@ -3,7 +3,7 @@ package dco
 import (
 	"testing"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/stretchr/testify/assert"
 	fixtures "gopkg.in/src-d/go-git-fixtures.v3"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestKindRule(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, dco.ID(), "STALE-BRANCH")
@@ -27,7 +27,7 @@ func TestRuleCheck(t *testing.T) {
 	r, err := git.Open(filesystem.NewStorage(f.DotGit(), cache.NewObjectLRUDefault()), nil)
 	assert.NoError(t, err)
 
-	df, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	df, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := df.Check(r, nil)

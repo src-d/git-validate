@@ -6,13 +6,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
-	_ "github.com/src-d/git-compliance/rule/dco"
-	_ "github.com/src-d/git-compliance/rule/dockerfile"
-	_ "github.com/src-d/git-compliance/rule/file"
-	_ "github.com/src-d/git-compliance/rule/shortsubject"
-	_ "github.com/src-d/git-compliance/rule/stalebranch"
+	_ "github.com/src-d/git-validate/rule/dco"
+	_ "github.com/src-d/git-validate/rule/dockerfile"
+	_ "github.com/src-d/git-validate/rule/file"
+	_ "github.com/src-d/git-validate/rule/shortsubject"
+	_ "github.com/src-d/git-validate/rule/stalebranch"
 	"gopkg.in/src-d/go-git.v4"
 )
 
@@ -23,8 +23,8 @@ var (
 func main() {
 	flag.Parse()
 
-	var cfg compliance.Config
-	runner, err := compliance.NewRunner(&cfg)
+	var cfg validate.Config
+	runner, err := validate.NewRunner(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

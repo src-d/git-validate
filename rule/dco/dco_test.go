@@ -3,7 +3,7 @@ package dco
 import (
 	"testing"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestRuleCheck_Fail(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := dco.Check(nil, &object.Commit{Message: "foo"})
@@ -23,7 +23,7 @@ func TestRuleCheck_Fail(t *testing.T) {
 }
 
 func TestRuleCheck_Ignore(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := dco.Check(nil, &object.Commit{ParentHashes: []plumbing.Hash{
@@ -35,7 +35,7 @@ func TestRuleCheck_Ignore(t *testing.T) {
 }
 
 func TestRuleCheck_Pass(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := dco.Check(nil, &object.Commit{Message: "Signed-off-by: Máximo Cuadros <mcuadros@gmail.com>"})
@@ -45,7 +45,7 @@ func TestRuleCheck_Pass(t *testing.T) {
 }
 
 func TestKindRule(t *testing.T) {
-	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
+	dco, err := (&Kind{}).Rule(&validate.RuleConfig{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, dco.ID(), "DCO")

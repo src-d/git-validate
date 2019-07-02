@@ -6,16 +6,16 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 )
 
 func init() {
-	compliance.RegisterRuleKind(&Kind{})
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var defaultConfig = &compliance.RuleConfig{
+var defaultConfig = &validate.RuleConfig{
 	ID:          "short-subject",
-	Severity:    compliance.Low,
+	Severity:    validate.Low,
 	Description: "commit subject are strictly less than 90 (github ellipsis length)",
 }
 
@@ -25,23 +25,23 @@ func (*Kind) Name() string {
 	return "short-subject"
 }
 
-func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
 	cfg.Merge(defaultConfig)
-	return &Rule{compliance.NewBaseRule(compliance.History, *cfg)}, nil
+	return &Rule{validate.NewBaseRule(validate.History, *cfg)}, nil
 }
 
 type Rule struct {
-	compliance.BaseRule
+	validate.BaseRule
 }
 
 func (*Rule) Description() string {
 	return "commit subject are strictly less than 90 (github ellipsis length)"
 }
 
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report, error) {
-	res := &compliance.Report{
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
+	res := &validate.Report{
 		Rule:     r,
-		Location: &compliance.CommitLocation{Commit: c},
+		Location: &validate.CommitLocation{Commit: c},
 	}
 
 	if c.NumParents() > 1 {
@@ -50,13 +50,13 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report,
 
 	if c.Message == "" {
 		res.Message = "commit subject is empty"
-		return []*compliance.Report{res}, nil
+		return []*validate.Report{res}, nil
 	}
 
 	lines := strings.SplitN(c.Message, "\n", 2)
 	if len(lines[0]) >= 90 {
 		res.Message = "commit subject exceeds 90 characters"
-		return []*compliance.Report{res}, nil
+		return []*validate.Report{res}, nil
 	}
 
 	return nil, nil

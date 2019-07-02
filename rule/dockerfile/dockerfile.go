@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/src-d/git-compliance/compliance"
+	"github.com/src-d/git-validate/validate"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/zabio3/godolint/linter/rules"
@@ -15,12 +15,12 @@ import (
 )
 
 func init() {
-	compliance.RegisterRuleKind(&Kind{})
+	validate.RegisterRuleKind(&Kind{})
 }
 
-var defaultConfig = &compliance.RuleConfig{
+var defaultConfig = &validate.RuleConfig{
 	ID:       "dockerfile",
-	Severity: compliance.Medium,
+	Severity: validate.Medium,
 	Short:    "All the Dockerfiles complies the Docker's best practices guide",
 	Description: "" +
 		"Enforce to follow the Best Practices for writing Dockerfiles, the " +
@@ -33,16 +33,16 @@ var defaultConfig = &compliance.RuleConfig{
 // HEAD of the repository.
 type Kind struct{}
 
-// Name it honors the compliance.RuleKind interface.
+// Name it honors the validate.RuleKind interface.
 func (*Kind) Name() string {
 	return "dockerfile"
 }
 
-// Rule it honors the compliance.RuleKind interface.
-func (*Kind) Rule(cfg *compliance.RuleConfig) (compliance.Rule, error) {
+// Rule it honors the validate.RuleKind interface.
+func (*Kind) Rule(cfg *validate.RuleConfig) (validate.Rule, error) {
 	cfg.Merge(defaultConfig)
 
-	r := &Rule{BaseRule: compliance.NewBaseRule(compliance.HEAD, *cfg)}
+	r := &Rule{BaseRule: validate.NewBaseRule(validate.HEAD, *cfg)}
 	return r, cfg.LoadParamsTo(&r.Config)
 }
 
@@ -56,20 +56,20 @@ type RuleConfig struct {
 // Rule of a dockerfile.Kind
 type Rule struct {
 	Config RuleConfig
-	compliance.BaseRule
+	validate.BaseRule
 }
 
 // DockerfilePrefix prefix used to find Dockerfiles
 const DockerfilePrefix = "Dockerfile"
 
-// Check it honors the compliance.Rule interface.
-func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report, error) {
+// Check it honors the validate.Rule interface.
+func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
 	iter, err := c.Files()
 	if err != nil {
 		return nil, err
 	}
 
-	var results []*compliance.Report
+	var results []*validate.Report
 	return results, iter.ForEach(func(f *object.File) error {
 		filename := filepath.Base(f.Name)
 		if !strings.HasPrefix(filename, DockerfilePrefix) {
@@ -93,7 +93,7 @@ func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report,
 	})
 }
 
-func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reader) ([]*compliance.Report, error) {
+func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reader) ([]*validate.Report, error) {
 	ast, err := parser.Parse(df)
 	if err != nil {
 		if err.Error() == "file with no instructions." {
@@ -108,7 +108,7 @@ func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reade
 		ignored[i] = struct{}{}
 	}
 
-	var results []*compliance.Report
+	var results []*validate.Report
 	for _, rule := range rules.Rules {
 		if _, ok := ignored[rule.Code]; ok {
 			continue
@@ -119,33 +119,33 @@ func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reade
 	}
 
 	if len(results) == 0 {
-		return []*compliance.Report{{
+		return []*validate.Report{{
 			Rule:     r,
 			Pass:     true,
 			Message:  "Dockerfile complies the Docker's best practices guide",
-			Location: &compliance.FileLocation{Commit: c, Filename: filename},
+			Location: &validate.FileLocation{Commit: c, Filename: filename},
 		}}, nil
 	}
 
 	return results, err
 }
 
-func (r *Rule) toComplianceResult(c *object.Commit, filename string, rule *rules.Rule, results []rules.ValidateResult) []*compliance.Report {
+func (r *Rule) toComplianceResult(c *object.Commit, filename string, rule *rules.Rule, results []rules.ValidateResult) []*validate.Report {
 	if len(results) == 0 {
 		return nil
 	}
 
 	msgs := rules.CreateMessage(rule, results)
-	list := make([]*compliance.Report, len(results))
+	list := make([]*validate.Report, len(results))
 	for i, msg := range msgs {
 		parts := strings.SplitN(msg, " ", 3)
 		line, _ := strconv.Atoi(strings.Replace(parts[0], "#", "", -1))
 
-		list[i] = &compliance.Report{
+		list[i] = &validate.Report{
 			Rule:     r,
 			Pass:     false,
 			Code:     rule.Code,
-			Location: &compliance.LineLocation{Commit: c, Filename: filename, Line: line},
+			Location: &validate.LineLocation{Commit: c, Filename: filename, Line: line},
 			Message:  strings.Trim(parts[2], " \n"),
 		}
 	}
