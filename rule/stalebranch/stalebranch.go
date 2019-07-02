@@ -19,7 +19,8 @@ func init() {
 
 var defaultConfig = &validate.RuleConfig{
 	ID:       "stale-branch",
-	Severity: validate.Medium,
+	Severity: validate.Low,
+	Short:    "List of branches is clean and tidy",
 	Description: "" +
 		"Branch management is an important part of the Git workflow. After some " +
 		"time, your list of branches may grow, so it's a good idea to delete " +
@@ -59,7 +60,7 @@ func (r *Rule) Check(repository *git.Repository, _ *object.Commit) ([]*validate.
 	}
 
 	var reports []*validate.Report
-	return reports, iter.ForEach(func(ref *plumbing.Reference) error {
+	err = iter.ForEach(func(ref *plumbing.Reference) error {
 		ok, err := r.isValidBranch(head.Target(), ref)
 		if err != nil {
 			return err
@@ -81,6 +82,19 @@ func (r *Rule) Check(repository *git.Repository, _ *object.Commit) ([]*validate.
 		reports = append(reports, report)
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(reports) == 0 {
+		return []*validate.Report{{
+			Rule:    r,
+			Message: "List of branches is clean and tidy",
+		}}, nil
+	}
+
+	return reports, nil
 }
 
 func (r *Rule) isValidBranch(head plumbing.ReferenceName, ref *plumbing.Reference) (bool, error) {
@@ -111,7 +125,6 @@ func (r *Rule) checkReference(repository *git.Repository, ref *plumbing.Referenc
 		return &validate.Report{
 			Rule:     r,
 			Location: &validate.ReferenceLocation{Reference: ref},
-			Severity: validate.Low,
 			Message:  fmt.Sprintf("stalled branch, last commit was done %s, consider delete it", humanize.Time(c.Author.When)),
 		}, nil
 	}

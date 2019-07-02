@@ -35,5 +35,6 @@ func TestRuleCheck(t *testing.T) {
 	assert.Len(t, result, 2)
 
 	assert.NotNil(t, result[0].Rule)
+	assert.False(t, result[0].Pass)
 	assert.Equal(t, result[0].Location.String(), "refs/heads/branch")
 }
