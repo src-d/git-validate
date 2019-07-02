@@ -16,10 +16,10 @@ func TestKindRule(t *testing.T) {
 	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
 	assert.NoError(t, err)
 
-	assert.Equal(t, dco.ID(), "file")
+	assert.Equal(t, dco.ID(), "FILE")
 }
 
-func TestRuleCheck_Pass(t *testing.T) {
+func TestRuleCheck(t *testing.T) {
 	err := fixtures.Init()
 	assert.NoError(t, err)
 
@@ -31,12 +31,12 @@ func TestRuleCheck_Pass(t *testing.T) {
 
 	testCases := []struct {
 		files []string
-		pass  bool
+		pass  []bool
 	}{
-		{[]string{}, true},
-		{[]string{"LICENSE"}, true},
-		{[]string{"LICENSE", "not-present"}, false},
-		{[]string{"not-present"}, false},
+		{[]string{}, []bool{}},
+		{[]string{"LICENSE"}, []bool{true}},
+		{[]string{"LICENSE", "not-present"}, []bool{true, false}},
+		{[]string{"not-present"}, []bool{false}},
 	}
 
 	for _, tc := range testCases {
@@ -50,6 +50,10 @@ func TestRuleCheck_Pass(t *testing.T) {
 
 		result, err := dco.Check(r, c)
 		assert.NoError(t, err)
-		assert.Equal(t, result[0].Pass, tc.pass)
+		assert.Len(t, result, len(tc.pass))
+
+		for i, expected := range tc.pass {
+			assert.Equal(t, expected, result[i].Pass)
+		}
 	}
 }

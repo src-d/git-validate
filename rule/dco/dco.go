@@ -17,13 +17,14 @@ func init() {
 var defaultConfig = &compliance.RuleConfig{
 	ID:       "dco",
 	Severity: compliance.Medium,
+	Short:    "All commits are signed-off",
 	Description: "" +
 		"Enforces the [Developer Certificate of Origin](https://developercertificate.org/) " +
 		"(DCO) on commits. It requires all commit messages to contain the Signed-off-by " +
 		"line with an email address that matches the commit author.",
 }
 
-// Kind describe a rule kind that validates all the commits in a repository are
+// Kind describes a rule kind that validates all the commits in a repository are
 // signed-off.
 type Kind struct{}
 
@@ -48,24 +49,24 @@ var ValidDCO = regexp.MustCompile(`^Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>$`)
 
 // Check it honors the compliance.Rule interface.
 func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*compliance.Report, error) {
+	var msg string
 	if c.NumParents() > 1 {
 		return nil, nil
 	}
 
 	hasValid := false
+	msg = "Commit does not have a valid DCO"
 	for _, line := range strings.Split(c.Message, "\n") {
 		if ValidDCO.MatchString(line) {
+			msg = "Commit has a valid DCO"
 			hasValid = true
 		}
 	}
 
-	if hasValid {
-		return nil, nil
-	}
-
 	return []*compliance.Report{{
 		Rule:     r,
-		Message:  "does not have a valid DCO",
+		Pass:     hasValid,
+		Message:  msg,
 		Location: &compliance.CommitLocation{Commit: c},
 	}}, nil
 }

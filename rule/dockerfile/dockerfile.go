@@ -21,6 +21,7 @@ func init() {
 var defaultConfig = &compliance.RuleConfig{
 	ID:       "dockerfile",
 	Severity: compliance.Medium,
+	Short:    "All the Dockerfiles complies the Docker's best practices guide",
 	Description: "" +
 		"Enforce to follow the Best Practices for writing Dockerfiles, the " +
 		"recommended best practices and methods for building efficient Docker images." +
@@ -117,6 +118,15 @@ func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reade
 		results = append(results, r.toComplianceResult(c, filename, rule, result)...)
 	}
 
+	if len(results) == 0 {
+		return []*compliance.Report{{
+			Rule:     r,
+			Pass:     true,
+			Message:  "Dockerfile complies the Docker's best practices guide",
+			Location: &compliance.FileLocation{Commit: c, Filename: filename},
+		}}, nil
+	}
+
 	return results, err
 }
 
@@ -133,6 +143,7 @@ func (r *Rule) toComplianceResult(c *object.Commit, filename string, rule *rules
 
 		list[i] = &compliance.Report{
 			Rule:     r,
+			Pass:     false,
 			Code:     rule.Code,
 			Location: &compliance.LineLocation{Commit: c, Filename: filename, Line: line},
 			Message:  strings.Trim(parts[2], " \n"),

@@ -34,6 +34,7 @@ func TestRuleCheck(t *testing.T) {
 
 	report := result[0]
 	assert.NotNil(t, report.Rule)
+	assert.False(t, report.Pass)
 	assert.Equal(t, report.Code, "DL3006")
 	assert.Equal(t, report.Message, "Always tag the version of an image explicitly.")
 	assert.Equal(t, report.Location.String(), "Dockerfile:1@31d80c")
@@ -61,6 +62,8 @@ func TestRuleCheck_Nested(t *testing.T) {
 	result, err := df.Check(r, c)
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
+	assert.NotNil(t, result[0].Rule)
+	assert.False(t, result[0].Pass)
 }
 
 func TestRuleCheck_Ignore(t *testing.T) {
@@ -76,7 +79,8 @@ func TestRuleCheck_Ignore(t *testing.T) {
 
 	result, err := df.Check(r, c)
 	assert.NoError(t, err)
-	assert.Len(t, result, 0)
+	assert.Len(t, result, 1)
+	assert.True(t, result[0].Pass)
 }
 
 func CommitWithFile(name, content string) (*git.Repository, *object.Commit, error) {

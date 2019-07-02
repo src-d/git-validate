@@ -10,13 +10,16 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-func TestRuleCheck(t *testing.T) {
+func TestRuleCheck_Fail(t *testing.T) {
 	dco, err := (&Kind{}).Rule(&compliance.RuleConfig{})
 	assert.NoError(t, err)
 
 	result, err := dco.Check(nil, &object.Commit{Message: "foo"})
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
+	assert.NotNil(t, result[0].Rule)
+	assert.False(t, result[0].Pass)
+	assert.Equal(t, result[0].Location.String(), "000000")
 }
 
 func TestRuleCheck_Ignore(t *testing.T) {
@@ -37,7 +40,8 @@ func TestRuleCheck_Pass(t *testing.T) {
 
 	result, err := dco.Check(nil, &object.Commit{Message: "Signed-off-by: Máximo Cuadros <mcuadros@gmail.com>"})
 	assert.NoError(t, err)
-	assert.Len(t, result, 0)
+	assert.Len(t, result, 1)
+	assert.True(t, result[0].Pass)
 }
 
 func TestKindRule(t *testing.T) {

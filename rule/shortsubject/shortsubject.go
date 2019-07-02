@@ -15,7 +15,7 @@ func init() {
 
 var defaultConfig = &compliance.RuleConfig{
 	ID:          "short-subject",
-	Severity:    compliance.Medium,
+	Severity:    compliance.Low,
 	Description: "commit subject are strictly less than 90 (github ellipsis length)",
 }
 
