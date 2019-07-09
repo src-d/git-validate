@@ -27,8 +27,9 @@ type Rule interface {
 	Severity() Severity
 	// Description longer description for readability.
 	Description() string
-	// ShortDescription short description describing the rule.
-	ShortDescription() string
+	// ShortDescription short description describing the rule. If code is
+	// provided the description is about this specific case.
+	ShortDescription(code string) string
 	// Check evaluate a repository and a commit againts this rule.
 	Check(*git.Repository, *object.Commit) ([]*Report, error)
 }
@@ -60,7 +61,7 @@ func (r *BaseRule) Severity() Severity {
 }
 
 // ShortDescription honors the Rule interface.
-func (r *BaseRule) ShortDescription() string {
+func (r *BaseRule) ShortDescription(code string) string {
 	return r.config.Short
 }
 

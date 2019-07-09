@@ -62,6 +62,15 @@ type Rule struct {
 // DockerfilePrefix prefix used to find Dockerfiles
 const DockerfilePrefix = "Dockerfile"
 
+// ShortDescription it honors validate.Rule interface.
+func (r *Rule) ShortDescription(code string) string {
+	if m, ok := rules.Rules[code]; ok {
+		return m.Description
+	}
+
+	return r.BaseRule.ShortDescription(code)
+}
+
 // Check it honors the validate.Rule interface.
 func (r *Rule) Check(_ *git.Repository, c *object.Commit) ([]*validate.Report, error) {
 	iter, err := c.Files()
@@ -132,7 +141,13 @@ func (r *Rule) validateDockerfile(c *object.Commit, filename string, df io.Reade
 
 func (r *Rule) toComplianceResult(c *object.Commit, filename string, rule *rules.Rule, results []rules.ValidateResult) []*validate.Report {
 	if len(results) == 0 {
-		return nil
+		return []*validate.Report{{
+			Rule:     r,
+			Pass:     true,
+			Code:     rule.Code,
+			Message:  rule.Description,
+			Location: &validate.FileLocation{Commit: c, Filename: filename},
+		}}
 	}
 
 	msgs := rules.CreateMessage(rule, results)

@@ -30,14 +30,20 @@ func TestRuleCheck(t *testing.T) {
 
 	result, err := df.Check(r, c)
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Len(t, result, 31)
 
-	report := result[0]
-	assert.NotNil(t, report.Rule)
-	assert.False(t, report.Pass)
-	assert.Equal(t, report.Code, "DL3006")
-	assert.Equal(t, report.Message, "Always tag the version of an image explicitly.")
-	assert.Equal(t, report.Location.String(), "Dockerfile:1@31d80c")
+	for _, report := range result {
+		if report.Pass {
+			continue
+		}
+
+		assert.NotNil(t, report.Rule)
+		assert.False(t, report.Pass)
+		assert.Equal(t, report.Code, "DL3006")
+		assert.Equal(t, report.Message, "Always tag the version of an image explicitly.")
+		assert.Equal(t, report.Location.String(), "Dockerfile:1@31d80c")
+	}
+
 }
 
 func TestRuleCheck_Empty(t *testing.T) {
@@ -61,9 +67,19 @@ func TestRuleCheck_Nested(t *testing.T) {
 
 	result, err := df.Check(r, c)
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.NotNil(t, result[0].Rule)
-	assert.False(t, result[0].Pass)
+
+	var pass, fail int
+	for _, report := range result {
+		if report.Pass {
+			pass++
+			continue
+		}
+
+		fail++
+	}
+
+	assert.Equal(t, pass, 30)
+	assert.Equal(t, fail, 1)
 }
 
 func TestRuleCheck_Ignore(t *testing.T) {
@@ -79,8 +95,19 @@ func TestRuleCheck_Ignore(t *testing.T) {
 
 	result, err := df.Check(r, c)
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.True(t, result[0].Pass)
+
+	var pass, fail int
+	for _, report := range result {
+		if report.Pass {
+			pass++
+			continue
+		}
+
+		fail++
+	}
+
+	assert.Equal(t, pass, 30)
+	assert.Equal(t, fail, 0)
 }
 
 func CommitWithFile(name, content string) (*git.Repository, *object.Commit, error) {

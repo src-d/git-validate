@@ -98,7 +98,7 @@ func (r *Runner) runbyLevel(l Level, repository *git.Repository, commit *object.
 func (r *Runner) filterPassResults(reports []*Report) ([]*Report, error) {
 	nonPass := make(map[string]bool, 0)
 	for _, report := range reports {
-		id := report.Rule.ID()
+		id := report.ID()
 		if !nonPass[id] && !report.Pass {
 			nonPass[id] = true
 		}
@@ -112,10 +112,10 @@ func (r *Runner) filterPassResults(reports []*Report) ([]*Report, error) {
 			continue
 		}
 
-		id := report.Rule.ID()
+		id := report.ID()
 		if !nonPass[id] && !added[id] {
 			report.Location = nil
-			report.Message = report.Rule.ShortDescription()
+			report.Message = report.Rule.ShortDescription(report.Code)
 			output = append(output, report)
 			added[id] = true
 			continue

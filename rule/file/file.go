@@ -55,8 +55,8 @@ type Rule struct {
 }
 
 // ShortDescription it honors validate.Rule interface.
-func (r *Rule) ShortDescription() string {
-	return fmt.Sprintf(r.BaseRule.ShortDescription(), r.Config.Present)
+func (r *Rule) ShortDescription(code string) string {
+	return fmt.Sprintf(r.BaseRule.ShortDescription(code), r.Config.Present)
 }
 
 // Description it honors validate.Rule interface.

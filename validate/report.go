@@ -23,6 +23,14 @@ type Report struct {
 	Location Location
 }
 
+func (r Report) ID() string {
+	if r.Code != "" {
+		return fmt.Sprintf("%s|%s", r.Rule.ID(), r.Code)
+	}
+
+	return r.Rule.ID()
+}
+
 func (r Report) String() string {
 	buf := bytes.NewBuffer(nil)
 
@@ -38,12 +46,7 @@ func (r Report) String() string {
 	}
 
 	buf.WriteString(s.Color().Sprintf("%10s", s))
-	fmt.Fprintf(buf, " [%s", r.Rule.ID())
-	if r.Code != "" {
-		fmt.Fprintf(buf, "|%s", r.Code)
-	}
-
-	fmt.Fprintf(buf, "] %s", r.Message)
+	fmt.Fprintf(buf, " [%s] %s", r.ID(), r.Message)
 
 	if r.Location != nil {
 		fmt.Fprintf(buf, " (%s)", r.Location)
