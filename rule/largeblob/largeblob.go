@@ -70,6 +70,8 @@ func (r *Rule) Check(repository *git.Repository, c *object.Commit) ([]*validate.
 					Message:  fmt.Sprintf("Blob excess recommended size of %s", humanize.Bytes(uint64(sz))),
 					Location: &validate.BlobLocation{Blob: b},
 				})
+
+				break
 			}
 		}
 
